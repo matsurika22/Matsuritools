@@ -71,6 +71,47 @@
 
 ---
 
+---
+
+## 2025-07-24 作業ログ
+
+### 🎯 本日の目標
+- [x] GitHubリポジトリへの接続と初回プッシュ
+- [x] Next.jsプロジェクトの初期セットアップ
+- [x] Supabase環境変数の設定
+- [x] 開発サーバーの起動確認
+
+### 💻 実施内容
+- GitHubリポジトリ（https://github.com/MK-272/cardgame_kitaichikun）への接続成功
+- Next.js 14プロジェクトの初期ファイル作成
+  - package.json、tsconfig.json、next.config.js
+  - App Router構造でセットアップ
+  - Tailwind CSS設定
+- Supabase環境変数を.env.localに設定
+  - URL: https://gmtpxuqotxfzwwwkqlib.supabase.co
+  - 接続用クライアントを作成（lib/supabase/client.ts）
+- 開発サーバーをhttp://localhost:3000で起動確認
+
+### 🐛 発生したエラー/問題
+- create-next-appコマンドでの初期化時、既存ファイルとのコンフリクト
+  - 解決方法：必要なファイルを個別に作成
+- npm installで脆弱性警告
+  - 一部のパッケージが非推奨（@supabase/auth-helpers-nextjs等）
+  - 今後@supabase/ssrへの移行を検討
+
+### 📌 次回への申し送り
+- Supabaseでのテーブル作成（users、packs、rarities、cards、access_codes等）
+- 認証機能の実装開始（Email/Password、OAuth）
+- 基本的なUIコンポーネントの作成
+- @supabase/ssrへの移行検討
+
+### 💡 学習メモ
+- Next.js 14のApp Routerは/appディレクトリベースの新しいルーティング
+- Supabaseのauth-helpersパッケージは非推奨となり、ssrパッケージが推奨されている
+- .env.localファイルは自動的に.gitignoreに含まれるため、セキュリティ面で安全
+
+---
+
 ## テンプレート（コピー用）
 
 ```markdown
