@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function DashboardPage() {
   const { user, loading } = useRequireAuth()
@@ -61,6 +62,20 @@ export default function DashboardPage() {
               <p className="text-lg font-medium text-gray-900 dark:text-white">
                 {user.role === 'admin' ? '管理者' : 'ユーザー'}
               </p>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <Link href="/access-code">
+                <Button className="w-full" size="lg">
+                  アクセスコードを登録
+                </Button>
+              </Link>
+              
+              <Link href="/dashboard/packs">
+                <Button className="w-full" size="lg" variant="outline">
+                  弾選択へ進む
+                </Button>
+              </Link>
             </div>
 
             <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">

@@ -1,21 +1,34 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
 
 export default function Home() {
-  const { user, loading } = useAuth()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard')
+    const checkUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+        if (user) {
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        console.error('Auth check error:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [user, loading, router])
+    
+    checkUser()
+  }, [router])
 
   if (loading) {
     return (
