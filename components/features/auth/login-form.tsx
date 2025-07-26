@@ -34,14 +34,18 @@ export function LoginForm() {
       setError(null)
       
       console.log('Calling signIn...')
-      await signIn(data.email, data.password)
-      console.log('SignIn successful')
+      const result = await signIn(data.email, data.password)
+      console.log('SignIn successful', result)
       
-      // シンプルにダッシュボードへリダイレクト
+      // 少し待ってからリダイレクト
+      console.log('Waiting before redirect...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       console.log('Redirecting to dashboard...')
       window.location.href = '/dashboard'
     } catch (err: any) {
       console.error('Login error:', err)
+      setError('ログインエラー: ' + (err.message || 'Unknown error'))
       
       if (err.code === 'over_email_send_rate_limit' || err.message?.includes('security purposes')) {
         const waitTime = err.message?.match(/after (\d+) seconds/) ? err.message.match(/after (\d+) seconds/)[1] : '30'
