@@ -255,3 +255,32 @@ export async function createAccessCode(accessCode: {
     throw error
   }
 }
+
+export async function updateAccessCode(code: string, updates: {
+  pack_id?: string | null
+  valid_from?: string
+  valid_until?: string | null
+  max_uses?: number | null
+}) {
+  const { error } = await supabase
+    .from('access_codes')
+    .update(updates)
+    .eq('code', code)
+  
+  if (error) {
+    console.error('Error updating access code:', error)
+    throw error
+  }
+}
+
+export async function deleteAccessCode(code: string) {
+  const { error } = await supabase
+    .from('access_codes')
+    .delete()
+    .eq('code', code)
+  
+  if (error) {
+    console.error('Error deleting access code:', error)
+    throw error
+  }
+}

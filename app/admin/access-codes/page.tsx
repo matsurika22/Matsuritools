@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Key, Plus, Edit, Trash2, Search, Copy, Calendar, Package, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getAllAccessCodes, getAllPacks, createAccessCode } from '@/lib/supabase/admin'
+import { getAllAccessCodes, getAllPacks, createAccessCode, updateAccessCode, deleteAccessCode } from '@/lib/supabase/admin'
 
 interface AccessCode {
   code: string
@@ -28,6 +28,8 @@ export default function AccessCodesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingCode, setEditingCode] = useState<AccessCode | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
@@ -104,6 +106,57 @@ export default function AccessCodesPage() {
     }
   }
 
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (submitting || !editingCode) return
+
+    try {
+      setSubmitting(true)
+      
+      const updates = {
+        pack_id: formData.pack_id || null,
+        valid_from: formData.valid_from,
+        valid_until: formData.valid_until || null,
+        max_uses: formData.max_uses ? Number(formData.max_uses) : null
+      }
+
+      await updateAccessCode(editingCode.code, updates)
+      alert('アクセスコードを更新しました')
+      await loadData()
+      resetForm()
+    } catch (error) {
+      console.error('Error updating access code:', error)
+      alert('アクセスコードの更新に失敗しました')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (code: string) => {
+    if (!confirm('このアクセスコードを削除してもよろしいですか？')) return
+
+    try {
+      await deleteAccessCode(code)
+      alert('アクセスコードを削除しました')
+      await loadData()
+    } catch (error) {
+      console.error('Error deleting access code:', error)
+      alert('アクセスコードの削除に失敗しました')
+    }
+  }
+
+  const startEdit = (accessCode: AccessCode) => {
+    setEditingCode(accessCode)
+    setFormData({
+      code: accessCode.code,
+      pack_id: accessCode.pack_id || '',
+      valid_from: accessCode.valid_from,
+      valid_until: accessCode.valid_until || '',
+      max_uses: accessCode.max_uses?.toString() || ''
+    })
+    setShowEditModal(true)
+  }
+
   const copyToClipboard = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code)
@@ -123,6 +176,8 @@ export default function AccessCodesPage() {
       max_uses: ''
     })
     setShowCreateModal(false)
+    setShowEditModal(false)
+    setEditingCode(null)
   }
 
   const isExpired = (validUntil: string | null) => {
@@ -264,15 +319,34 @@ export default function AccessCodesPage() {
                         {getStatusBadge(accessCode)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Button
-                          onClick={() => copyToClipboard(accessCode.code)}
-                          size="sm"
-                          variant="outline"
-                          className={copiedCode === accessCode.code ? 'bg-green-50 border-green-200' : ''}
-                        >
-                          <Copy className="h-4 w-4" />
-                          {copiedCode === accessCode.code ? 'コピー済み' : 'コピー'}
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => copyToClipboard(accessCode.code)}
+                            size="sm"
+                            variant="outline"
+                            className={copiedCode === accessCode.code ? 'bg-green-50 border-green-200' : ''}
+                            title="コピー"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => startEdit(accessCode)}
+                            size="sm"
+                            variant="outline"
+                            title="編集"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(accessCode.code)}
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:bg-red-50"
+                            title="削除"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -327,15 +401,34 @@ export default function AccessCodesPage() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => copyToClipboard(accessCode.code)}
-                    size="sm"
-                    variant="outline"
-                    className={`w-full ${copiedCode === accessCode.code ? 'bg-green-50 border-green-200' : ''}`}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    {copiedCode === accessCode.code ? 'コピー済み' : 'コードをコピー'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => copyToClipboard(accessCode.code)}
+                      size="sm"
+                      variant="outline"
+                      className={`flex-1 ${copiedCode === accessCode.code ? 'bg-green-50 border-green-200' : ''}`}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {copiedCode === accessCode.code ? 'コピー済み' : 'コピー'}
+                    </Button>
+                    <Button
+                      onClick={() => startEdit(accessCode)}
+                      size="sm"
+                      variant="outline"
+                      title="編集"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(accessCode.code)}
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 hover:bg-red-50"
+                      title="削除"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -471,6 +564,100 @@ export default function AccessCodesPage() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   {submitting ? '作成中...' : '作成'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 編集モーダル */}
+      {showEditModal && editingCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              アクセスコードを編集
+            </h2>
+            
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  アクセスコード
+                </label>
+                <Input
+                  value={formData.code}
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  対象弾
+                </label>
+                <select
+                  value={formData.pack_id}
+                  onChange={(e) => setFormData({...formData, pack_id: e.target.value})}
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm"
+                >
+                  <option value="">全弾対応</option>
+                  {packs.map(pack => (
+                    <option key={pack.id} value={pack.id}>{pack.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  有効開始日 *
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={formData.valid_from}
+                  onChange={(e) => setFormData({...formData, valid_from: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  有効終了日
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={formData.valid_until}
+                  onChange={(e) => setFormData({...formData, valid_until: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  最大使用回数
+                </label>
+                <Input
+                  type="number"
+                  value={formData.max_uses}
+                  onChange={(e) => setFormData({...formData, max_uses: e.target.value})}
+                  placeholder="例: 100（未入力で無制限）"
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  disabled={submitting}
+                  className="flex-1"
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitting || !formData.valid_from}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {submitting ? '更新中...' : '更新'}
                 </Button>
               </div>
             </form>
