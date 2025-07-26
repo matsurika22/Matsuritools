@@ -99,10 +99,9 @@ export function AccessCodeForm() {
               },
             })}
             type="text"
-            placeholder=""
-            className="pl-10 uppercase"
+            placeholder="例: TEST-CODE-2024"
+            className="pl-10"
             disabled={isLoading || success}
-            style={{ textTransform: 'uppercase' }}
           />
         </div>
       </FormField>
