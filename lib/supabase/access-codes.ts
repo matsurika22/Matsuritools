@@ -1,16 +1,17 @@
 import { supabase } from './client'
 
 export async function validateAccessCode(code: string, userId: string) {
-  // コードの形式を正規化（大文字、ハイフン区切り）
-  const normalizedCode = code.toUpperCase().replace(/\s/g, '')
+  // コードの形式を正規化（大文字、スペース削除、末尾のハイフン削除）
+  const normalizedCode = code.toUpperCase().replace(/\s/g, '').replace(/-+$/, '')
   
-  console.log('Validating access code:', normalizedCode)
+  console.log('Original code:', code)
+  console.log('Normalized code:', normalizedCode)
   
-  // アクセスコードの存在と有効性を確認
+  // アクセスコードの存在と有効性を確認（大文字小文字を区別しない）
   const { data: accessCodes, error: codeError } = await supabase
     .from('access_codes')
     .select('*')
-    .eq('code', normalizedCode)
+    .ilike('code', normalizedCode)
     .limit(1)
 
   console.log('Access code query result:', { accessCodes, codeError })
