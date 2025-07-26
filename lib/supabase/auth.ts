@@ -2,6 +2,17 @@ import { supabase } from './client'
 import type { User } from '@/types/auth'
 
 export async function signUp(email: string, password: string, handleName: string) {
+  // まず既存のユーザーをチェック
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .single()
+
+  if (existingUser) {
+    throw new Error('このメールアドレスは既に登録されています')
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -19,10 +30,28 @@ export async function signUp(email: string, password: string, handleName: string
         handle_name: handleName,
         role: 'user',
       })
+      .select()
+      .single()
 
     if (profileError) {
       console.error('Profile creation error:', profileError)
-      throw profileError
+      // 既に存在する場合は、auth.usersには作成されているが
+      // usersテーブルには作成されていない状態なので、更新を試みる
+      if (profileError.code === '23505') {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            handle_name: handleName,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', data.user.id)
+
+        if (updateError) {
+          throw updateError
+        }
+      } else {
+        throw profileError
+      }
     }
   }
 

@@ -56,8 +56,10 @@ export function RegisterForm() {
         code: err.code
       })
       
-      if (err.message?.includes('already registered')) {
+      if (err.message?.includes('already registered') || err.message?.includes('既に登録されています')) {
         setError('このメールアドレスは既に登録されています')
+      } else if (err.code === '23505') {
+        setError('このメールアドレスは既に使用されています。ログインするか、別のメールアドレスをお使いください。')
       } else if (err.message?.includes('users')) {
         setError('データベースの設定が完了していません。管理者にお問い合わせください。')
       } else if (err.code === 'over_email_send_rate_limit' || err.message?.includes('security purposes')) {
