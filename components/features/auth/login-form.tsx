@@ -29,6 +29,8 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     console.log('Login form submitted', data.email)
+    
+    
     try {
       setIsLoading(true)
       setError(null)
@@ -60,8 +62,15 @@ export function LoginForm() {
     }
   }
 
+  // フォーム送信ハンドラー
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Form submit event prevented')
+    handleSubmit(onSubmit)(e)
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       {error && (
         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
           {error}
