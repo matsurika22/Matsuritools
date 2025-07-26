@@ -1,8 +1,8 @@
 import { supabase } from './client'
 
 export async function validateAccessCode(code: string, userId: string) {
-  // コードの形式を正規化（大文字、スペース削除、末尾のハイフン削除）
-  const normalizedCode = code.toUpperCase().replace(/\s/g, '').replace(/-+$/, '')
+  // コードの形式を正規化（スペース削除のみ、大文字小文字は保持）
+  const normalizedCode = code.replace(/\s/g, '')
   
   console.log('Original code:', code)
   console.log('Normalized code:', normalizedCode)
