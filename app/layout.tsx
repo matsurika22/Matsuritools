@@ -6,7 +6,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'カードボックス期待値計算サービス',
+  title: 'Matsuritools',
   description: 'デュエル・マスターズのカードボックス開封時の換金期待値を計算',
 }
 

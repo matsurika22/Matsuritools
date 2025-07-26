@@ -43,7 +43,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-24">
       <div className="text-center space-y-6 max-w-2xl w-full">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-          カードボックス期待値計算サービス
+          Matsuritools
         </h1>
         <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400">
           デュエル・マスターズのボックス開封期待値を簡単計算
