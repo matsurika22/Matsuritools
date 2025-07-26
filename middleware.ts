@@ -32,23 +32,24 @@ export async function middleware(req: NextRequest) {
 
   try {
     const supabase = createMiddlewareClient({ req, res })
-    
-    // セッションを更新して取得
-    const { data: { session } } = await supabase.auth.getSession()
 
-    // パブリックパスはそのまま通す
+    // パブリックパスはそのまま通す（セッションチェック前に）
     if (PUBLIC_PATHS.includes(pathname)) {
       return res
     }
+    
+    // セッションを取得（リフレッシュも試行）
+    const { data: { session } } = await supabase.auth.getSession()
 
     // 未ログインユーザーをログインページへリダイレクト
     if (!session) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    // メール認証チェック
+    // メール認証チェック（管理者はスキップ）
     if (pathname !== '/verify-email' && !pathname.startsWith('/auth')) {
-      const { data: { user } } = await supabase.auth.getUser()
+      // セッションからユーザー情報を取得（APIコール回避）
+      const user = session.user
       
       // 管理者（mk0207yu1111@gmail.com）は認証チェックをスキップ
       if (user && !user.email_confirmed_at && user.email !== 'mk0207yu1111@gmail.com') {
@@ -59,6 +60,7 @@ export async function middleware(req: NextRequest) {
     return res
   } catch (error) {
     console.error('[Middleware] Unexpected error:', error)
+    // エラーが発生してもアクセスを許可（開発中の安全策）
     return res
   }
 }

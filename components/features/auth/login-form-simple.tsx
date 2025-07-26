@@ -39,8 +39,9 @@ export function LoginFormSimple() {
         // 少し待ってから強制的にリダイレクト
         setTimeout(() => {
           console.log('リダイレクト実行')
+          // セッションがミドルウェアに確実に反映されるよう、もう少し待つ
           window.location.replace('/dashboard')
-        }, 1000)
+        }, 1500)
       }
     } catch (err: any) {
       console.error('ログインエラー:', err)
