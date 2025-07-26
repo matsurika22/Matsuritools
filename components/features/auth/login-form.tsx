@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { FormField } from '@/components/ui/form-field'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 import { signIn } from '@/lib/supabase/auth'
+import { supabase } from '@/lib/supabase/client'
 
 export function LoginForm() {
   const router = useRouter()
@@ -33,11 +34,22 @@ export function LoginForm() {
       setError(null)
       
       console.log('Calling signIn...')
-      await signIn(data.email, data.password)
-      console.log('SignIn successful')
+      const result = await signIn(data.email, data.password)
+      console.log('SignIn successful', result)
       
-      // ログイン成功後、ダッシュボードへリダイレクト
-      router.push('/dashboard')
+      // メール認証状態を確認
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('User after login:', user)
+      console.log('Email confirmed at:', user?.email_confirmed_at)
+      
+      // ログイン成功後のリダイレクト
+      if (user && !user.email_confirmed_at) {
+        console.log('Redirecting to verify-email...')
+        router.push('/verify-email')
+      } else {
+        console.log('Redirecting to dashboard...')
+        router.push('/dashboard')
+      }
       router.refresh()
     } catch (err: any) {
       console.error('Login error:', err)
