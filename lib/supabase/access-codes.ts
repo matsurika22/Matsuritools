@@ -71,6 +71,35 @@ export async function validateAccessCode(code: string, userId: string) {
 }
 
 export async function getUserAccessiblePacks(userId: string) {
+  // まずユーザーのroleをチェック
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single()
+  
+  if (userError) {
+    console.error('Error fetching user role:', userError)
+    // roleカラムがない場合は通常の処理を続行
+  }
+  
+  // friendロールの場合は全ての弾を返す
+  if (userData?.role === 'friend') {
+    const { data: packs, error: packsError } = await supabase
+      .from('packs')
+      .select('*')
+      .eq('is_active', true)
+      .order('release_date', { ascending: false })
+    
+    if (packsError) {
+      console.error('Error fetching packs:', packsError)
+      return []
+    }
+    
+    return packs || []
+  }
+  
+  // 通常ユーザーの処理
   // ユーザーが持っているアクセスコードを取得
   const { data: userCodes, error: userCodesError } = await supabase
     .from('user_codes')

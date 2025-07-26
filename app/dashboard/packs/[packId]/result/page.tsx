@@ -50,12 +50,28 @@ export default function ResultPage({ params }: PageProps) {
 
         // ユーザーの価格を取得
         const userPrices = await getUserPrices(user.id, params.packId)
+        console.log(`Result page: Got ${userPrices.size} user prices`)
         setPrices(userPrices)
+
+        // ユーザー価格がない場合はデータベースの価格を使用
+        const finalPrices = new Map(userPrices)
+        if (userPrices.size === 0) {
+          console.log('No user prices found, using database prices')
+          cardList.forEach(card => {
+            if (!finalPrices.has(card.id)) {
+              finalPrices.set(card.id, card.parameters?.buyback_price || 0)
+            }
+          })
+        }
+
+        // 価格が設定されているカードのみをフィルタリング（表示されていたカードのみ）
+        const cardsWithPrices = cardList.filter(card => finalPrices.has(card.id))
+        console.log(`Calculating with ${cardsWithPrices.length} cards that have prices (out of ${cardList.length} total)`)
 
         // 期待値を計算
         const { expectedValue, profitProbability } = await calculateExpectedValue(
-          cardList,
-          userPrices,
+          cardsWithPrices,
+          finalPrices,
           boxPrice
         )
 
@@ -74,7 +90,7 @@ export default function ResultPage({ params }: PageProps) {
           expectedValue,
           profitProbability,
           boxPrice,
-          totalCards: cardList.length,
+          totalCards: cardsWithPrices.length,
           pricesEntered: userPrices.size
         })
       } catch (error) {
@@ -111,7 +127,7 @@ export default function ResultPage({ params }: PageProps) {
   }
 
   const profit = result.expectedValue - result.boxPrice
-  const profitRate = ((profit / result.boxPrice) * 100).toFixed(1)
+  const profitRate = (100 + (profit / result.boxPrice) * 100).toFixed(1)
   const isProfitable = profit > 0
 
   return (
@@ -138,7 +154,7 @@ export default function ResultPage({ params }: PageProps) {
 
           <div className="p-6 space-y-6">
             {/* メイン結果 */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="flex justify-center">
               <div className="text-center p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
                 <div className="flex justify-center mb-2">
                   <Coins className="h-8 w-8 text-yellow-500" />
@@ -146,16 +162,6 @@ export default function ResultPage({ params }: PageProps) {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">期待値</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
                   ¥{result.expectedValue.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="text-center p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div className="flex justify-center mb-2">
-                  <BarChart3 className="h-8 w-8 text-blue-500" />
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">プラス収支確率</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {result.profitProbability}%
                 </p>
               </div>
             </div>
@@ -185,32 +191,6 @@ export default function ResultPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* 統計情報 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div className="flex items-center">
-                  <Package className="h-5 w-5 text-gray-400 mr-2" />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">総カード数</p>
-                    <p className="text-lg font-medium text-gray-900 dark:text-white">
-                      {result.totalCards}枚
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div className="flex items-center">
-                  <BarChart3 className="h-5 w-5 text-gray-400 mr-2" />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">価格入力済み</p>
-                    <p className="text-lg font-medium text-gray-900 dark:text-white">
-                      {result.pricesEntered}枚
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* アクション */}
             <div className="flex justify-center gap-4 pt-4">

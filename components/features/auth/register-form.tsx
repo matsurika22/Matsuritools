@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { Mail, Lock, Loader2 } from 'lucide-react'
+import { Mail, Lock, Loader2, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +30,7 @@ export function RegisterForm() {
       setIsLoading(true)
       setError(null)
       
-      await signUp(data.email, data.password)
+      await signUp(data.email, data.password, data.handleName)
       
       // 登録成功
       setSuccess(true)
@@ -82,6 +82,24 @@ export function RegisterForm() {
           {error}
         </div>
       )}
+
+      <FormField
+        label="ハンドルネーム (HN)"
+        error={errors.handleName?.message}
+        required
+      >
+        <div className="relative">
+          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            {...register('handleName')}
+            type="text"
+            placeholder="例: ゲーマー太郎"
+            className="pl-10"
+            error={!!errors.handleName}
+            disabled={isLoading}
+          />
+        </div>
+      </FormField>
 
       <FormField
         label="メールアドレス"

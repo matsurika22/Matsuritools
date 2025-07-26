@@ -6,13 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "tsx scripts/seed-database.ts",
+    "db:reset": "tsx scripts/seed-database.ts",
+    "sync-sheets": "tsx scripts/sync-sheets.ts",
+    "sync-pack": "tsx scripts/sync-sheets.ts pack",
+    "fix-db": "tsx scripts/fix-database.ts",
+    "check-schema": "tsx scripts/check-schema.ts",
+    "add-columns": "tsx scripts/add-missing-columns.ts",
+    "add-samples": "tsx scripts/add-sample-cards.ts",
+    "create-pack-rarities": "tsx scripts/create-pack-rarities-table.ts",
+    "init-pack-rarities": "tsx scripts/init-pack-rarities.ts",
+    "init-pack-rarities-detailed": "tsx scripts/init-pack-rarities-detailed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/supabase-js": "^2.39.3",
     "@tanstack/react-query": "^5.83.0",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^133.0.0",
     "lucide-react": "^0.525.0",
     "next": "14.2.5",
     "react": "^18",
@@ -26,10 +39,12 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "dotenv": "^16.4.5",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.7.1",
     "typescript": "^5"
   }
 }

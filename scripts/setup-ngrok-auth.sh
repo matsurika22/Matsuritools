@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "🔐 ngrok認証セットアップ"
+echo ""
+echo "1. https://dashboard.ngrok.com/get-started/your-authtoken にアクセス"
+echo "2. 表示されたauthtokenをコピー"
+echo "3. 以下のコマンドを実行："
+echo ""
+echo "ngrok config add-authtoken YOUR_AUTHTOKEN_HERE"
+echo ""
+echo "例："
+echo "ngrok config add-authtoken 2fGq1234567890abcdef..."
+echo ""
+echo "設定後、再度以下のコマンドでngrokを起動："
+echo "ngrok http 3000"

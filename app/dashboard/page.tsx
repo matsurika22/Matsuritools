@@ -1,15 +1,40 @@
 'use client'
 
 import { useRequireAuth } from '@/hooks/use-auth'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 export default function DashboardPage() {
   const { user, loading } = useRequireAuth()
   const router = useRouter()
+  const [userRole, setUserRole] = useState<string>('user')
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          
+          if (!error && data) {
+            setUserRole(data.role || 'user')
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error)
+        }
+      }
+    }
+    
+    fetchUserRole()
+  }, [user])
 
   if (loading) {
     return (
@@ -60,11 +85,20 @@ export default function DashboardPage() {
                 アカウント権限
               </p>
               <p className="text-lg font-medium text-gray-900 dark:text-white">
-                {user.role === 'admin' ? '管理者' : 'ユーザー'}
+                {userRole === 'admin' ? '管理者' : userRole === 'friend' ? '知り合い' : 'ユーザー'}
               </p>
             </div>
 
             <div className="mt-8 space-y-4">
+              {userRole === 'admin' && (
+                <Link href="/admin">
+                  <Button className="w-full" size="lg" variant="secondary">
+                    <Shield className="mr-2 h-4 w-4" />
+                    管理画面
+                  </Button>
+                </Link>
+              )}
+              
               <Link href="/access-code">
                 <Button className="w-full" size="lg">
                   アクセスコードを登録

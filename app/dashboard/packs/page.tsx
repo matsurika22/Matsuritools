@@ -49,23 +49,25 @@ export default function PacksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+        <div className="mb-4 sm:mb-6 flex items-center justify-between">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              ダッシュボードへ戻る
+              <span className="hidden sm:inline">ダッシュボードへ戻る</span>
+              <span className="sm:hidden">戻る</span>
             </Button>
           </Link>
           
           <Link href="/access-code">
             <Button variant="outline" size="sm">
-              新しいコードを追加
+              <span className="hidden sm:inline">新しいコードを追加</span>
+              <span className="sm:hidden">コード追加</span>
             </Button>
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
           弾選択
         </h1>
 
@@ -82,40 +84,42 @@ export default function PacksPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
             {packs.map((pack) => (
               <Link
                 key={pack.id}
                 href={`/dashboard/packs/${pack.id}/cards`}
                 className="block"
               >
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">
                     {pack.name}
                   </h2>
                   
-                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      発売日: {pack.releaseDate ? new Date(pack.releaseDate).toLocaleDateString('ja-JP') : '未定'}
+                      <Calendar className="mr-2 h-3 sm:h-4 w-3 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        発売日: {pack.releaseDate ? new Date(pack.releaseDate).toLocaleDateString('ja-JP') : '未定'}
+                      </span>
                     </div>
                     
                     {pack.boxPrice && (
                       <div className="flex items-center">
-                        <Coins className="mr-2 h-4 w-4" />
-                        定価: ¥{pack.boxPrice.toLocaleString()}
+                        <Coins className="mr-2 h-3 sm:h-4 w-3 sm:w-4 flex-shrink-0" />
+                        <span>定価: ¥{pack.boxPrice.toLocaleString()}</span>
                       </div>
                     )}
                     
                     <div className="flex items-center">
-                      <Package className="mr-2 h-4 w-4" />
-                      {pack.packsPerBox ? `${pack.packsPerBox}パック/箱` : 'パック構成未定'}
+                      <Package className="mr-2 h-3 sm:h-4 w-3 sm:w-4 flex-shrink-0" />
+                      <span>{pack.packsPerBox ? `${pack.packsPerBox}パック/箱` : 'パック構成未定'}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex justify-end">
-                    <Button size="sm">
-                      価格入力へ進む →
+                  <div className="mt-3 sm:mt-4 flex justify-end">
+                    <Button size="sm" className="text-xs sm:text-sm">
+                      価格入力へ →
                     </Button>
                   </div>
                 </div>

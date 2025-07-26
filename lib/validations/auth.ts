@@ -12,6 +12,11 @@ export const loginSchema = z.object({
 })
 
 export const registerSchema = z.object({
+  handleName: z
+    .string()
+    .min(1, 'ハンドルネームを入力してください')
+    .min(2, 'ハンドルネームは2文字以上で入力してください')
+    .max(50, 'ハンドルネームは50文字以下で入力してください'),
   email: z
     .string()
     .min(1, 'メールアドレスを入力してください')

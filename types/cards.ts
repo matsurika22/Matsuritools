@@ -18,7 +18,11 @@ export interface Card {
   name: string
   imageUrl: string | null
   boxRate: number
-  parameters: any
+  parameters?: {
+    buyback_price?: number
+    reference_price?: number
+    [key: string]: any
+  }
   createdAt: string
   updatedAt: string
   // 追加フィールド（JOIN用）
@@ -32,6 +36,14 @@ export interface UserPrice {
   cardId: string
   price: number
   updatedAt: string
+}
+
+export interface Pack {
+  id: string
+  name: string
+  box_price?: number
+  display_rarity_ids?: string[]
+  custom_card_ids?: string[]
 }
 
 export interface CalculationResult {

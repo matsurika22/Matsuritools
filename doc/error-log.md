@@ -44,6 +44,50 @@
 
 ---
 
+## 2025-07-24 15:00 - Supabase usersテーブル カラム不存在エラー
+
+### 📍 発生箇所
+- ファイル名：lib/supabase/admin.ts
+- 関数/コンポーネント名：getAllUsers()
+- 行番号：40
+
+### 🔴 エラー内容
+```
+GET https://gmtpxuqotxfzwwwkqlib.supabase.co/rest/v1/users?select=id%2Cemail%2Crole%2Ccreated_at%2Clast_sign_in_at&order=created_at.desc 400 (Bad Request)
+
+Error fetching users: {code: '42703', details: null, hint: null, message: 'column users.last_sign_in_at does not exist'}
+```
+
+### 🔍 原因
+- Supabaseのusersテーブルに`last_sign_in_at`カラムが存在しないにも関わらず、Admin機能でこのカラムを取得しようとしていた
+- マイグレーションファイル（002_check_and_create_users.sql）を確認すると、usersテーブルには以下のカラムのみ定義されている：
+  - id (UUID)
+  - email (TEXT)
+  - role (TEXT)
+  - created_at (TIMESTAMP)
+  - updated_at (TIMESTAMP)
+
+### ✅ 解決方法
+1. **Admin TypeScript型定義を修正**
+   - lib/supabase/admin.ts の AdminUser インターフェースから `last_sign_in_at` プロパティを削除
+   
+2. **データベースクエリを修正**
+   - getAllUsers() 関数のselectクエリから `last_sign_in_at` を削除
+   
+3. **Admin画面表示を修正**
+   - app/admin/users/page.tsx で「最終ログイン」列を「ユーザーID」列に変更
+   - last_sign_in_at の表示ロジックを削除し、ユーザーIDの一部を表示する形に変更
+
+### 📚 参考リンク
+- [Supabase Auth Schema Documentation](https://supabase.com/docs/guides/auth/auth-schema)
+
+### 💡 学んだこと
+- データベーススキーマとアプリケーションコードの整合性を保つことの重要性
+- マイグレーションファイルを確認してから機能を実装すべき
+- 今後は必要に応じて `last_sign_in_at` カラムをマイグレーションで追加することも検討できる
+
+---
+
 ## よくあるエラーと対処法（予想）
 
 ### Next.js関連

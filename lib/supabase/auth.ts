@@ -1,7 +1,7 @@
 import { supabase } from './client'
 import type { User } from '@/types/auth'
 
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, handleName: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -16,6 +16,7 @@ export async function signUp(email: string, password: string) {
       .insert({
         id: data.user.id,
         email: data.user.email!,
+        handle_name: handleName,
         role: 'user',
       })
 
@@ -59,6 +60,7 @@ export async function getCurrentUser(): Promise<User | null> {
   return {
     id: profile.id,
     email: profile.email,
+    handleName: profile.handle_name,
     role: profile.role,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,

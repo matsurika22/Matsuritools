@@ -1,6 +1,7 @@
 export interface User {
   id: string
   email: string
+  handleName: string
   role: 'user' | 'editor' | 'admin'
   createdAt: string
   updatedAt: string
@@ -17,8 +18,3 @@ export interface LoginFormData {
   password: string
 }
 
-export interface RegisterFormData {
-  email: string
-  password: string
-  confirmPassword: string
-}
