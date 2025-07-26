@@ -43,10 +43,16 @@ export function RegisterForm() {
       setError(null)
       setLastSubmitTime(now)
       
-      await signUp(data.email, data.password, data.handleName)
+      const result = await signUp(data.email, data.password, data.handleName)
       
-      // 登録成功
-      setSuccess(true)
+      // 登録成功（ただしメール認証が必要）
+      if (result.user && !result.user.email_confirmed_at) {
+        // メール認証が必要な場合
+        setSuccess(true)
+      } else if (result.user && result.user.email_confirmed_at) {
+        // 既にメール認証済み（管理者など）
+        window.location.href = '/dashboard'
+      }
     } catch (err: any) {
       console.error('Registration error details:', {
         error: err,

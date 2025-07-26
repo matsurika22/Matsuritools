@@ -26,6 +26,14 @@ export default function DashboardPage() {
         }
         
         console.log('[Dashboard] ユーザー情報取得成功:', user.email)
+        
+        // メール認証チェック（管理者以外）
+        if (user.email !== 'mk0207yu1111@gmail.com' && !user.email_confirmed_at) {
+          console.log('[Dashboard] メール認証が必要です')
+          window.location.href = '/verify-email'
+          return
+        }
+        
         setUser(user)
         
         // roleの取得（失敗しても続行）
