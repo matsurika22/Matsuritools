@@ -85,7 +85,7 @@ export default function AdminDashboard() {
           管理ダッシュボード
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
-          カードボックス期待値計算サービスの管理画面
+          Matsuritoolsの管理画面
         </p>
       </div>
 
