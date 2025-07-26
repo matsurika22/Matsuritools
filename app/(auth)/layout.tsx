@@ -10,9 +10,6 @@ export default function AuthLayout({
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Matsuritools
           </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            デュエル・マスターズ専用ツール
-          </p>
         </div>
         <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-xl rounded-lg sm:px-10">
           {children}
