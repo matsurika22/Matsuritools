@@ -3,6 +3,7 @@ import { supabase } from './client'
 export interface AdminUser {
   id: string
   email: string
+  handle_name: string
   role: 'user' | 'admin' | 'friend'
   created_at: string
 }
@@ -40,7 +41,7 @@ export interface AdminCard {
 export async function getAllUsers(): Promise<AdminUser[]> {
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, role, created_at')
+    .select('id, email, handle_name, role, created_at')
     .order('created_at', { ascending: false })
   
   if (error) {

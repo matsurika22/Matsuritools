@@ -91,7 +91,7 @@ export function AccessCodeForm() {
               },
             })}
             type="text"
-            placeholder="XXXX-XXXX-XXXX"
+            placeholder=""
             className="pl-10 uppercase"
             disabled={isLoading || success}
             style={{ textTransform: 'uppercase' }}

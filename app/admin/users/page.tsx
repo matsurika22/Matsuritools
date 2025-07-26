@@ -60,7 +60,9 @@ export default function UsersPage() {
   }
 
   const filteredUsers = (users || []).filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    const searchLower = debouncedSearchTerm.toLowerCase()
+    const matchesSearch = user.email.toLowerCase().includes(searchLower) || 
+                         user.handle_name?.toLowerCase().includes(searchLower)
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     return matchesSearch && matchesRole
   })
@@ -92,7 +94,7 @@ export default function UsersPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="メールアドレスで検索..."
+                placeholder="メールアドレスまたはHNで検索..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -181,10 +183,10 @@ export default function UsersPage() {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {user.email}
+                              {user.handle_name || 'HN未設定'}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              ID: {user.id.slice(0, 8)}...
+                              {user.email}
                             </div>
                           </div>
                         </div>
@@ -234,7 +236,10 @@ export default function UsersPage() {
                         </div>
                       </div>
                       <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white break-all">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user.handle_name || 'HN未設定'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-all">
                           {user.email}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
