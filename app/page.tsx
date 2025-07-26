@@ -18,7 +18,8 @@ export default function Home() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
         if (user) {
-          router.push('/dashboard')
+          // Vercel環境でも確実にリダイレクト
+          window.location.replace('/dashboard')
         }
       } catch (error) {
         console.error('Auth check error:', error)
@@ -28,7 +29,7 @@ export default function Home() {
     }
     
     checkUser()
-  }, [router])
+  }, [])
 
   if (loading) {
     return (

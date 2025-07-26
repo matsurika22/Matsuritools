@@ -32,13 +32,13 @@ export function LoginForm() {
       setIsLoading(true)
       setError(null)
       
-      await signIn(data.email, data.password)
+      const { data: authData } = await signIn(data.email, data.password)
       
-      // セッションが確立されるまで少し待つ
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // ページを完全にリロードしてセッションを確実に読み込む
-      window.location.href = '/dashboard'
+      if (authData?.user) {
+        // ログイン成功を確認してからリダイレクト
+        // Vercel環境でのリダイレクトを確実にするため
+        window.location.replace('/dashboard')
+      }
     } catch (err: any) {
       console.error('Login error:', err)
       setError('ログインエラー: ' + (err.message || 'Unknown error'))
