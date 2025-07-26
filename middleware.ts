@@ -49,10 +49,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // メール認証チェックを一時的に無効化
-  // TODO: 本番環境では有効化する
-  /*
-  if (pathname !== '/verify-email') {
+  // メール認証チェック
+  if (pathname !== '/verify-email' && !pathname.startsWith('/auth')) {
     const { data: { user } } = await supabase.auth.getUser()
     console.log('[Middleware] User email confirmed:', user?.email_confirmed_at ? 'yes' : 'no')
     
@@ -61,7 +59,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/verify-email', req.url))
     }
   }
-  */
 
   return res
 }

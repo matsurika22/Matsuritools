@@ -69,7 +69,6 @@ export function useRequireAuth(redirectTo = '/login') {
       console.log('[useRequireAuth] No user, redirecting to:', redirectTo)
       router.push(redirectTo)
     }
-    // メール認証チェックを一時的に無効化
   }, [user, loading, router, redirectTo])
 
   return { user, loading }
