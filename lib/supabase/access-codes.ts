@@ -4,6 +4,8 @@ export async function validateAccessCode(code: string, userId: string) {
   // コードの形式を正規化（大文字、ハイフン区切り）
   const normalizedCode = code.toUpperCase().replace(/\s/g, '')
   
+  console.log('Validating access code:', normalizedCode)
+  
   // アクセスコードの存在と有効性を確認
   const { data: accessCodes, error: codeError } = await supabase
     .from('access_codes')
@@ -11,8 +13,15 @@ export async function validateAccessCode(code: string, userId: string) {
     .eq('code', normalizedCode)
     .limit(1)
 
-  if (codeError || !accessCodes || accessCodes.length === 0) {
-    throw new Error('無効なアクセスコードです')
+  console.log('Access code query result:', { accessCodes, codeError })
+
+  if (codeError) {
+    console.error('Access code query error:', codeError)
+    throw new Error(`データベースエラー: ${codeError.message}`)
+  }
+
+  if (!accessCodes || accessCodes.length === 0) {
+    throw new Error(`無効なアクセスコードです: ${normalizedCode}`)
   }
 
   const accessCode = accessCodes[0]
