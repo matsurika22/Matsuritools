@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   '/access-code',
   '/auth/callback',
   '/auth/confirm',
+  '/verify-email',
 ]
 
 // 静的アセットのパス

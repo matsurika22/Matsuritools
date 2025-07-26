@@ -27,11 +27,14 @@ export function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('Login form submitted', data.email)
     try {
       setIsLoading(true)
       setError(null)
       
+      console.log('Calling signIn...')
       await signIn(data.email, data.password)
+      console.log('SignIn successful')
       
       // ログイン成功後、ダッシュボードへリダイレクト
       router.push('/dashboard')

@@ -41,13 +41,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- RLSを再度有効化
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- ポリシーの再作成（必要に応じて）
-CREATE POLICY IF NOT EXISTS "Users can read own data" ON public.users
+-- 既存のポリシーを削除
+DROP POLICY IF EXISTS "Users can read own data" ON public.users;
+DROP POLICY IF EXISTS "Service role can manage all users" ON public.users;
+DROP POLICY IF EXISTS "System can insert users" ON public.users;
+
+-- ポリシーの再作成
+CREATE POLICY "Users can read own data" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Service role can manage all users" ON public.users
+CREATE POLICY "Service role can manage all users" ON public.users
   FOR ALL USING (auth.jwt()->>'role' = 'service_role');
 
 -- システム用のINSERTポリシー（トリガー用）
-CREATE POLICY IF NOT EXISTS "System can insert users" ON public.users
+CREATE POLICY "System can insert users" ON public.users
   FOR INSERT WITH CHECK (true);
