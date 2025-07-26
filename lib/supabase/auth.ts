@@ -2,16 +2,8 @@ import { supabase } from './client'
 import type { User } from '@/types/auth'
 
 export async function signUp(email: string, password: string, handleName: string) {
-  // まず既存のユーザーをチェック
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', email)
-    .single()
-
-  if (existingUser) {
-    throw new Error('このメールアドレスは既に登録されています')
-  }
+  // 既存ユーザーチェックは一時的に無効化（RLSエラー回避）
+  // TODO: RLSポリシー修正後に有効化
 
   // Supabase Authでユーザー作成（メタデータにhandle_nameを含める）
   const { data, error } = await supabase.auth.signUp({
