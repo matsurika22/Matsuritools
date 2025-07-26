@@ -34,7 +34,7 @@ export function LoginForm() {
       setError(null)
       
       console.log('🔵 signIn呼び出し中...')
-      const { data: authData } = await signIn(data.email, data.password)
+      const authData = await signIn(data.email, data.password)
       console.log('🔵 signIn結果:', authData)
       
       if (authData?.user) {
