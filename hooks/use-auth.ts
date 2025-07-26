@@ -65,22 +65,11 @@ export function useRequireAuth(redirectTo = '/login') {
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (!loading && !user) {
-        router.push(redirectTo)
-        return
-      }
-
-      // メール認証チェック
-      if (!loading && user) {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-        if (authUser && !authUser.email_confirmed_at) {
-          router.push('/verify-email')
-        }
-      }
+    if (!loading && !user) {
+      console.log('[useRequireAuth] No user, redirecting to:', redirectTo)
+      router.push(redirectTo)
     }
-
-    checkAuthStatus()
+    // メール認証チェックを一時的に無効化
   }, [user, loading, router, redirectTo])
 
   return { user, loading }

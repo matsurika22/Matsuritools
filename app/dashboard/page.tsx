@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const { user, loading } = useRequireAuth()
   const router = useRouter()
   const [userRole, setUserRole] = useState<string>('user')
+  
+  console.log('[Dashboard] Loading:', loading, 'User:', user)
 
   useEffect(() => {
     const fetchUserRole = async () => {
