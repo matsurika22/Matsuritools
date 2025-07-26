@@ -5,15 +5,17 @@ export async function validateAccessCode(code: string, userId: string) {
   const normalizedCode = code.toUpperCase().replace(/\s/g, '')
   
   // アクセスコードの存在と有効性を確認
-  const { data: accessCode, error: codeError } = await supabase
+  const { data: accessCodes, error: codeError } = await supabase
     .from('access_codes')
     .select('*')
     .eq('code', normalizedCode)
-    .single()
+    .limit(1)
 
-  if (codeError || !accessCode) {
+  if (codeError || !accessCodes || accessCodes.length === 0) {
     throw new Error('無効なアクセスコードです')
   }
+
+  const accessCode = accessCodes[0]
 
   // 有効期限チェック
   const now = new Date()
@@ -34,14 +36,14 @@ export async function validateAccessCode(code: string, userId: string) {
   }
 
   // 既に登録済みかチェック
-  const { data: existingUserCode } = await supabase
+  const { data: existingUserCodes } = await supabase
     .from('user_codes')
     .select('*')
     .eq('user_id', userId)
     .eq('code', normalizedCode)
-    .single()
+    .limit(1)
 
-  if (existingUserCode) {
+  if (existingUserCodes && existingUserCodes.length > 0) {
     throw new Error('このコードは既に登録済みです')
   }
 
@@ -72,16 +74,18 @@ export async function validateAccessCode(code: string, userId: string) {
 
 export async function getUserAccessiblePacks(userId: string) {
   // まずユーザーのroleをチェック
-  const { data: userData, error: userError } = await supabase
+  const { data: userDataArray, error: userError } = await supabase
     .from('users')
     .select('role')
     .eq('id', userId)
-    .single()
+    .limit(1)
   
   if (userError) {
     console.error('Error fetching user role:', userError)
     // roleカラムがない場合は通常の処理を続行
   }
+  
+  const userData = userDataArray?.[0]
   
   // friendロールの場合は全ての弾を返す
   if (userData?.role === 'friend') {
