@@ -28,16 +28,22 @@ export function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('🔵 ログインフォーム送信開始', data.email)
     try {
       setIsLoading(true)
       setError(null)
       
+      console.log('🔵 signIn呼び出し中...')
       const { data: authData } = await signIn(data.email, data.password)
+      console.log('🔵 signIn結果:', authData)
       
       if (authData?.user) {
+        console.log('🔵 ログイン成功！ダッシュボードへリダイレクトします')
         // ログイン成功を確認してからリダイレクト
         // Vercel環境でのリダイレクトを確実にするため
         window.location.replace('/dashboard')
+      } else {
+        console.log('🔴 ユーザー情報が取得できませんでした')
       }
     } catch (err: any) {
       console.error('Login error:', err)
@@ -58,8 +64,9 @@ export function LoginForm() {
 
   // フォーム送信ハンドラー
   const handleFormSubmit = (e: React.FormEvent) => {
+    console.log('🟢 フォーム送信イベント発生')
     e.preventDefault()
-    console.log('Form submit event prevented')
+    console.log('🟢 デフォルトイベントを防止')
     handleSubmit(onSubmit)(e)
   }
 
@@ -111,6 +118,7 @@ export function LoginForm() {
         type="submit"
         className="w-full"
         disabled={isLoading}
+        onClick={() => console.log('🟡 ログインボタンがクリックされました')}
       >
         {isLoading ? (
           <>
