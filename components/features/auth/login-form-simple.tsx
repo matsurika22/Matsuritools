@@ -34,8 +34,13 @@ export function LoginFormSimple() {
       
       if (result?.user) {
         console.log('ログイン成功！リダイレクトします')
-        // 確実にリダイレクト
-        window.location.href = '/dashboard'
+        // 成功メッセージを表示
+        setError(null)
+        // 少し待ってから強制的にリダイレクト
+        setTimeout(() => {
+          console.log('リダイレクト実行')
+          window.location.replace('/dashboard-simple')
+        }, 1000)
       }
     } catch (err: any) {
       console.error('ログインエラー:', err)
