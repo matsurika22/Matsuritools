@@ -30,7 +30,7 @@
 ## 🏗️ プロジェクト構成
 
 ```
-cardgame_kitaichikun/
+matsuritools/
 ├── app/              # Next.js App Router
 ├── components/       # Reactコンポーネント
 ├── lib/             # ユーティリティ関数
@@ -50,8 +50,8 @@ cardgame_kitaichikun/
 
 1. **リポジトリのクローン**
 ```bash
-git clone https://github.com/MK-272/cardgame_kitaichikun.git
-cd cardgame_kitaichikun
+git clone https://github.com/MK-272/matsuritools.git
+cd matsuritools
 ```
 
 2. **依存関係のインストール**

@@ -21,8 +21,8 @@
 
 ```bash
 # リポジトリのクローン（URLは後で確認）
-git clone https://github.com/[username]/cardgame_kitaichikun.git
-cd cardgame_kitaichikun
+git clone https://github.com/[username]/matsuritools.git
+cd matsuritools
 
 # 開発ブランチの作成
 git checkout -b develop
@@ -58,7 +58,7 @@ npm install -D @types/node
 #### 4.1 Supabaseプロジェクト作成
 1. [Supabase](https://supabase.com)にログイン
 2. 「New Project」をクリック
-3. プロジェクト名：`cardgame-kitaichikun`
+3. プロジェクト名：`matsuritools`
 4. データベースパスワードを設定（安全に保管）
 5. リージョン：Northeast Asia (Tokyo)を選択
 

@@ -13,7 +13,7 @@
 ### 1-1. プロジェクトの作成
 1. [Google Cloud Console](https://console.cloud.google.com/) にアクセス
 2. 新しいプロジェクトを作成（既存プロジェクトでも可）
-3. プロジェクト名: `cardgame-kitaichikun` など
+3. プロジェクト名: `matsuritools` など
 
 ### 1-2. Google Sheets APIの有効化
 1. APIとサービス > ライブラリに移動
@@ -23,7 +23,7 @@
 ### 1-3. サービスアカウントの作成
 1. APIとサービス > 認証情報に移動
 2. 「認証情報を作成」> 「サービスアカウント」
-3. サービスアカウント名: `cardgame-sheets-reader`
+3. サービスアカウント名: `matsuritools-sheets-reader`
 4. 役割: なし（シート共有で権限付与）
 5. 「完了」をクリック
 
@@ -76,7 +76,7 @@
 1. 作成したスプレッドシートを開く
 2. 「共有」ボタンをクリック
 3. サービスアカウントのメールアドレスを追加
-   - メールアドレス例: `cardgame-sheets-reader@project-id.iam.gserviceaccount.com`
+   - メールアドレス例: `matsuritools-sheets-reader@project-id.iam.gserviceaccount.com`
 4. 権限: 「閲覧者」
 5. 「送信」をクリック
 

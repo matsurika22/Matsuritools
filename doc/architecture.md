@@ -35,7 +35,7 @@ graph TB
 ## 📁 ディレクトリ構造
 
 ```
-cardgame_kitaichikun/
+matsuritools/
 ├── app/                      # Next.js App Router
 │   ├── (auth)/              # 認証関連ページ
 │   │   ├── login/

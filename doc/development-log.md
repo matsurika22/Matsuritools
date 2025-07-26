@@ -82,7 +82,7 @@
 - [x] 開発サーバーの起動確認
 
 ### 💻 実施内容
-- GitHubリポジトリ（https://github.com/MK-272/cardgame_kitaichikun）への接続成功
+- GitHubリポジトリ（https://github.com/MK-272/matsuritools）への接続成功
 - Next.js 14プロジェクトの初期ファイル作成
   - package.json、tsconfig.json、next.config.js
   - App Router構造でセットアップ

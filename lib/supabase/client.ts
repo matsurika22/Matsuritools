@@ -12,7 +12,7 @@ export const supabase = createClient(
       detectSessionInUrl: true,
       autoRefreshToken: true,
       // セッション管理の強化
-      storageKey: 'cardgame-auth-token',
+      storageKey: 'matsuritools-auth-token',
     },
     db: {
       // データベース接続の最適化
@@ -21,7 +21,7 @@ export const supabase = createClient(
     global: {
       // 406エラー対策: Accept headerを明示的に設定
       headers: {
-        'X-Client-Info': 'cardgame-kitaichikun@1.0.0',
+        'X-Client-Info': 'matsuritools@1.0.0',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         ...(config.app.environment === 'production' && {
@@ -50,7 +50,7 @@ export const supabaseAdmin = config.supabase.serviceRoleKey
         },
         global: {
           headers: {
-            'X-Client-Info': 'cardgame-kitaichikun-admin@1.0.0',
+            'X-Client-Info': 'matsuritools-admin@1.0.0',
           },
         },
       }

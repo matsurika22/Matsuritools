@@ -4,7 +4,7 @@
 
 ### 1. Supabaseダッシュボードにアクセス
 1. [Supabase](https://app.supabase.com) にログイン
-2. プロジェクト「cardgame_kitaichikun」を選択
+2. プロジェクト「matsuritools」を選択
 
 ### 2. SQLエディタでテーブル作成
 1. 左メニューの「SQL Editor」をクリック
