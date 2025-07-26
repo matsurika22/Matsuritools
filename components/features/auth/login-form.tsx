@@ -34,23 +34,12 @@ export function LoginForm() {
       setError(null)
       
       console.log('Calling signIn...')
-      const result = await signIn(data.email, data.password)
-      console.log('SignIn successful', result)
+      await signIn(data.email, data.password)
+      console.log('SignIn successful')
       
-      // メール認証状態を確認
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('User after login:', user)
-      console.log('Email confirmed at:', user?.email_confirmed_at)
-      
-      // ログイン成功後のリダイレクト
-      if (user && !user.email_confirmed_at) {
-        console.log('Redirecting to verify-email...')
-        router.push('/verify-email')
-      } else {
-        console.log('Redirecting to dashboard...')
-        router.push('/dashboard')
-      }
-      router.refresh()
+      // シンプルにダッシュボードへリダイレクト
+      console.log('Redirecting to dashboard...')
+      window.location.href = '/dashboard'
     } catch (err: any) {
       console.error('Login error:', err)
       
