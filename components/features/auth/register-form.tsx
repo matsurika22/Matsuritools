@@ -16,6 +16,7 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [lastSubmitTime, setLastSubmitTime] = useState<number>(0)
 
   const {
     register,
@@ -27,8 +28,20 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
+      // レート制限チェック（最低3秒間隔）
+      const now = Date.now()
+      const timeSinceLastSubmit = now - lastSubmitTime
+      const minimumInterval = 3000 // 3秒
+
+      if (timeSinceLastSubmit < minimumInterval) {
+        const waitTime = Math.ceil((minimumInterval - timeSinceLastSubmit) / 1000)
+        setError(`🔒 セキュリティのため、あと${waitTime}秒お待ちください。`)
+        return
+      }
+
       setIsLoading(true)
       setError(null)
+      setLastSubmitTime(now)
       
       await signUp(data.email, data.password, data.handleName)
       
@@ -49,9 +62,11 @@ export function RegisterForm() {
         setError('データベースの設定が完了していません。管理者にお問い合わせください。')
       } else if (err.code === 'over_email_send_rate_limit' || err.message?.includes('security purposes')) {
         const waitTime = err.message?.match(/after (\d+) seconds/) ? err.message.match(/after (\d+) seconds/)[1] : '30'
-        setError(`🔒 セキュリティのため、${waitTime}秒お待ちください。その後再度お試しください。`)
+        setError(`🔒 セキュリティ制限により、${waitTime}秒後に再度お試しください。\n連続した登録試行が制限されています。`)
       } else if (err.message?.includes('Too Many Requests') || err.message?.includes('429')) {
-        setError('⏱️ リクエストが多すぎます。30秒ほど待ってから再度お試しください。')
+        setError('⏱️ アクセスが集中しています。1分ほど待ってから再度お試しください。')
+      } else if (err.message?.includes('rate limit') || err.message?.includes('Rate limit')) {
+        setError('🚦 レート制限に達しました。しばらく時間をおいてから再度お試しください。')
       } else {
         setError(`登録中にエラーが発生しました: ${err.message || 'もう一度お試しください'}`)
       }
@@ -163,7 +178,7 @@ export function RegisterForm() {
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || (Date.now() - lastSubmitTime) < 3000}
       >
         {isLoading ? (
           <>
