@@ -46,7 +46,7 @@ export default function Home() {
           Matsuritools
         </h1>
         <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400">
-          デュエル・マスターズのボックス開封期待値を簡単計算
+          BOX開封期待値を簡単計算
         </p>
         
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-8 px-4 sm:px-0">
