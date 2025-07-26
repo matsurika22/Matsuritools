@@ -1,12 +1,16 @@
 -- RLSポリシーを一時的に無効化してテーブルを再構築
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 
--- 既存のポリシーをすべて削除
+-- 既存のポリシーをすべて削除（存在する可能性のあるものすべて）
 DROP POLICY IF EXISTS "Users can read own data" ON public.users;
 DROP POLICY IF EXISTS "Service role can manage all users" ON public.users;
 DROP POLICY IF EXISTS "System can insert users" ON public.users;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.users;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can insert own profile on signup" ON public.users;
+DROP POLICY IF EXISTS "Service role has full access" ON public.users;
+DROP POLICY IF EXISTS "Authenticated users can check email existence" ON public.users;
 
 -- RLSを再度有効化
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;

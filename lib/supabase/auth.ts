@@ -18,39 +18,23 @@ export async function signUp(email: string, password: string, handleName: string
 
   if (error) throw error
 
-  // トリガーが自動的にusersテーブルにレコードを作成するが、
-  // 念のため確認と更新を行う
+  // トリガーが自動的にusersテーブルにレコードを作成するので、
+  // クライアント側での作成は行わない
+  // トリガーの処理を待つため少し待機
   if (data.user) {
-    // 少し待機してトリガーの処理を待つ
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // handle_nameが正しく設定されているか確認
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // プロフィールが作成されたか確認（読み取りのみ）
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('*')
       .eq('id', data.user.id)
       .single()
 
-    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
-      console.error('Profile fetch error:', profileError)
-    }
-
-    // プロフィールが存在しない、またはhandle_nameが異なる場合は更新
-    if (!profile || profile.handle_name !== handleName) {
-      const { error: upsertError } = await supabase
-        .from('users')
-        .upsert({
-          id: data.user.id,
-          email: data.user.email!,
-          handle_name: handleName,
-          role: 'user',
-        })
-        .select()
-
-      if (upsertError) {
-        console.error('Profile upsert error:', upsertError)
-        throw upsertError
-      }
+    if (profileError) {
+      console.log('Profile not found yet, but trigger should create it:', profileError)
+    } else {
+      console.log('Profile created by trigger:', profile)
     }
   }
 
