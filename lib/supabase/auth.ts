@@ -1,4 +1,4 @@
-import { supabase } from './client'
+import { supabaseSimple as supabase } from './client-simple'
 import type { User } from '@/types/auth'
 
 export async function signUp(email: string, password: string, handleName: string) {
