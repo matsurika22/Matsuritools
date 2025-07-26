@@ -36,9 +36,17 @@ export function LoginForm() {
       // ログイン成功後、ダッシュボードへリダイレクト
       router.push('/dashboard')
       router.refresh()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err)
-      setError('メールアドレスまたはパスワードが正しくありません')
+      
+      if (err.code === 'over_email_send_rate_limit' || err.message?.includes('security purposes')) {
+        const waitTime = err.message?.match(/after (\d+) seconds/) ? err.message.match(/after (\d+) seconds/)[1] : '30'
+        setError(`🔒 セキュリティのため、${waitTime}秒お待ちください。その後再度お試しください。`)
+      } else if (err.message?.includes('Too Many Requests') || err.message?.includes('429')) {
+        setError('⏱️ リクエストが多すぎます。30秒ほど待ってから再度お試しください。')
+      } else {
+        setError('メールアドレスまたはパスワードが正しくありません')
+      }
     } finally {
       setIsLoading(false)
     }

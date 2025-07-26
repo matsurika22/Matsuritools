@@ -47,6 +47,11 @@ export function RegisterForm() {
         setError('このメールアドレスは既に登録されています')
       } else if (err.message?.includes('users')) {
         setError('データベースの設定が完了していません。管理者にお問い合わせください。')
+      } else if (err.code === 'over_email_send_rate_limit' || err.message?.includes('security purposes')) {
+        const waitTime = err.message?.match(/after (\d+) seconds/) ? err.message.match(/after (\d+) seconds/)[1] : '30'
+        setError(`🔒 セキュリティのため、${waitTime}秒お待ちください。その後再度お試しください。`)
+      } else if (err.message?.includes('Too Many Requests') || err.message?.includes('429')) {
+        setError('⏱️ リクエストが多すぎます。30秒ほど待ってから再度お試しください。')
       } else {
         setError(`登録中にエラーが発生しました: ${err.message || 'もう一度お試しください'}`)
       }
