@@ -46,6 +46,9 @@ export function AccessCodeForm() {
       setIsLoading(true)
       setError(null)
       
+      console.log('Submitting access code:', data.code)
+      console.log('User ID:', user.id)
+      
       await validateAccessCode(data.code, user.id)
       
       setSuccess(true)
@@ -55,6 +58,11 @@ export function AccessCodeForm() {
       }, 1500)
     } catch (err: any) {
       console.error('Access code validation error:', err)
+      console.error('Error details:', {
+        message: err.message,
+        code: data.code,
+        userId: user.id
+      })
       setError(err.message || 'アクセスコードの検証に失敗しました')
     } finally {
       setIsLoading(false)
