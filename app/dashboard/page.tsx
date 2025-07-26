@@ -137,12 +137,6 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>開発中：</strong> 期待値計算機能は現在開発中です。
-                アクセスコード入力、弾選択、価格入力などの機能が順次追加されます。
-              </p>
-            </div>
           </div>
         </div>
       </div>
