@@ -99,13 +99,6 @@ export function AccessCodeForm() {
         </div>
       </FormField>
 
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        <p>アクセスコードの例：</p>
-        <ul className="mt-2 space-y-1 list-disc list-inside">
-          <li>24RP-TEST-0001（特定弾専用）</li>
-          <li>DEMO-FREE-2024（全弾アクセス）</li>
-        </ul>
-      </div>
 
       <Button
         type="submit"
