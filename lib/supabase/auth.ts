@@ -13,44 +13,51 @@ export async function signUp(email: string, password: string, handleName: string
     throw new Error('このメールアドレスは既に登録されています')
   }
 
+  // Supabase Authでユーザー作成（メタデータにhandle_nameを含める）
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        handle_name: handleName,
+      }
+    }
   })
 
   if (error) throw error
 
-  // ユーザーテーブルにレコードを作成
+  // トリガーが自動的にusersテーブルにレコードを作成するが、
+  // 念のため確認と更新を行う
   if (data.user) {
-    const { error: profileError } = await supabase
+    // 少し待機してトリガーの処理を待つ
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // handle_nameが正しく設定されているか確認
+    const { data: profile, error: profileError } = await supabase
       .from('users')
-      .insert({
-        id: data.user.id,
-        email: data.user.email!,
-        handle_name: handleName,
-        role: 'user',
-      })
-      .select()
+      .select('*')
+      .eq('id', data.user.id)
       .single()
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // 既に存在する場合は、auth.usersには作成されているが
-      // usersテーブルには作成されていない状態なので、更新を試みる
-      if (profileError.code === '23505') {
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({
-            handle_name: handleName,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', data.user.id)
+    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('Profile fetch error:', profileError)
+    }
 
-        if (updateError) {
-          throw updateError
-        }
-      } else {
-        throw profileError
+    // プロフィールが存在しない、またはhandle_nameが異なる場合は更新
+    if (!profile || profile.handle_name !== handleName) {
+      const { error: upsertError } = await supabase
+        .from('users')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email!,
+          handle_name: handleName,
+          role: 'user',
+        })
+        .select()
+
+      if (upsertError) {
+        console.error('Profile upsert error:', upsertError)
+        throw upsertError
       }
     }
   }
