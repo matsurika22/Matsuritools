@@ -62,16 +62,9 @@ export function LoginForm() {
     }
   }
 
-  // フォーム送信ハンドラー
-  const handleFormSubmit = (e: React.FormEvent) => {
-    console.log('🟢 フォーム送信イベント発生')
-    e.preventDefault()
-    console.log('🟢 デフォルトイベントを防止')
-    handleSubmit(onSubmit)(e)
-  }
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-6">
+    <div className="space-y-6">
       {error && (
         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
           {error}
@@ -115,10 +108,10 @@ export function LoginForm() {
       </FormField>
 
       <Button
-        type="submit"
+        type="button"
         className="w-full"
         disabled={isLoading}
-        onClick={() => console.log('🟡 ログインボタンがクリックされました')}
+        onClick={handleSubmit(onSubmit)}
       >
         {isLoading ? (
           <>
@@ -139,6 +132,6 @@ export function LoginForm() {
           新規登録
         </Link>
       </p>
-    </form>
+    </div>
   )
 }
