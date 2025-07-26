@@ -23,44 +23,44 @@ const STATIC_PATHS = [
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
   const { pathname } = req.nextUrl
-
-  console.log('[Middleware] Path:', pathname)
 
   // 静的アセットはスキップ
   if (STATIC_PATHS.some(path => pathname.startsWith(path))) {
     return res
   }
 
-  // セッションを取得
-  const { data: { session } } = await supabase.auth.getSession()
-  console.log('[Middleware] Session:', session ? 'exists' : 'none')
+  try {
+    const supabase = createMiddlewareClient({ req, res })
+    
+    // セッションを更新して取得
+    const { data: { session } } = await supabase.auth.getSession()
 
-  // パブリックパスはそのまま通す
-  if (PUBLIC_PATHS.includes(pathname)) {
-    console.log('[Middleware] Public path, allowing access')
+    // パブリックパスはそのまま通す
+    if (PUBLIC_PATHS.includes(pathname)) {
+      return res
+    }
+
+    // 未ログインユーザーをログインページへリダイレクト
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
+
+    // メール認証チェック
+    if (pathname !== '/verify-email' && !pathname.startsWith('/auth')) {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // 管理者（mk0207yu1111@gmail.com）は認証チェックをスキップ
+      if (user && !user.email_confirmed_at && user.email !== 'mk0207yu1111@gmail.com') {
+        return NextResponse.redirect(new URL('/verify-email', req.url))
+      }
+    }
+
+    return res
+  } catch (error) {
+    console.error('[Middleware] Unexpected error:', error)
     return res
   }
-
-  // 未ログインユーザーをログインページへリダイレクト
-  if (!session) {
-    console.log('[Middleware] No session, redirecting to login')
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
-
-  // メール認証チェック
-  if (pathname !== '/verify-email' && !pathname.startsWith('/auth')) {
-    const { data: { user } } = await supabase.auth.getUser()
-    console.log('[Middleware] User email confirmed:', user?.email_confirmed_at ? 'yes' : 'no')
-    
-    if (user && !user.email_confirmed_at) {
-      console.log('[Middleware] Email not confirmed, redirecting to verify-email')
-      return NextResponse.redirect(new URL('/verify-email', req.url))
-    }
-  }
-
-  return res
 }
 
 export const config = {

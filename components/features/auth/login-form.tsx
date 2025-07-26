@@ -28,22 +28,16 @@ export function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('Login form submitted', data.email)
-    
-    
     try {
       setIsLoading(true)
       setError(null)
       
-      console.log('Calling signIn...')
-      const result = await signIn(data.email, data.password)
-      console.log('SignIn successful', result)
+      await signIn(data.email, data.password)
       
-      // 少し待ってからリダイレクト
-      console.log('Waiting before redirect...')
+      // セッションが確立されるまで少し待つ
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      console.log('Redirecting to dashboard...')
+      // ページを完全にリロードしてセッションを確実に読み込む
       window.location.href = '/dashboard'
     } catch (err: any) {
       console.error('Login error:', err)

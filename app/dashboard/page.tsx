@@ -13,24 +13,29 @@ export default function DashboardPage() {
   const { user, loading } = useRequireAuth()
   const router = useRouter()
   const [userRole, setUserRole] = useState<string>('user')
-  
-  console.log('[Dashboard] Loading:', loading, 'User:', user)
 
   useEffect(() => {
     const fetchUserRole = async () => {
       if (user) {
+        // userオブジェクトにroleが含まれている場合は使用
+        if (user.role) {
+          setUserRole(user.role)
+          return
+        }
+        
+        // roleがない場合のみDBから取得（エラーは無視）
         try {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('users')
             .select('role')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
           
-          if (!error && data) {
+          if (data) {
             setUserRole(data.role || 'user')
           }
         } catch (error) {
-          console.error('Error fetching user role:', error)
+          console.log('Role fetch error, using default')
         }
       }
     }

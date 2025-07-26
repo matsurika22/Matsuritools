@@ -19,9 +19,11 @@ export const supabase = createClient(
       schema: 'public',
     },
     global: {
-      // 本番環境でのセキュリティヘッダー
+      // 406エラー対策: Accept headerを明示的に設定
       headers: {
         'X-Client-Info': 'cardgame-kitaichikun@1.0.0',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
         ...(config.app.environment === 'production' && {
           'X-Requested-With': 'XMLHttpRequest',
         }),

@@ -39,23 +39,23 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="text-center space-y-6">
-        <h1 className="text-4xl font-bold">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-24">
+      <div className="text-center space-y-6 max-w-2xl w-full">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
           カードボックス期待値計算サービス
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400">
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400">
           デュエル・マスターズのボックス開封期待値を簡単計算
         </p>
         
-        <div className="flex gap-4 justify-center mt-8">
-          <Link href="/login">
-            <Button size="lg">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-8 px-4 sm:px-0">
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full">
               ログイン
             </Button>
           </Link>
-          <Link href="/register">
-            <Button size="lg" variant="outline">
+          <Link href="/register" className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" className="w-full">
               新規登録
             </Button>
           </Link>

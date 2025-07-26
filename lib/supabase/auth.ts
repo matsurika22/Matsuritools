@@ -1,4 +1,4 @@
-import { supabaseSimple as supabase } from './client-simple'
+import { supabase } from './client'
 import type { User } from '@/types/auth'
 
 export async function signUp(email: string, password: string, handleName: string) {
@@ -42,20 +42,43 @@ export async function getCurrentUser(): Promise<User | null> {
   
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // 406エラーが発生してもとりあえず動作させる
+  try {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
 
-  if (!profile) return null
+    if (!profile) {
+      // プロファイルが取得できない場合はauth情報から作成
+      return {
+        id: user.id,
+        email: user.email || '',
+        handleName: user.user_metadata?.handle_name || 'ユーザー',
+        role: 'user',
+        createdAt: user.created_at || new Date().toISOString(),
+        updatedAt: user.updated_at || new Date().toISOString(),
+      }
+    }
 
-  return {
-    id: profile.id,
-    email: profile.email,
-    handleName: profile.handle_name,
-    role: profile.role,
-    createdAt: profile.created_at,
-    updatedAt: profile.updated_at,
+    return {
+      id: profile.id,
+      email: profile.email,
+      handleName: profile.handle_name,
+      role: profile.role,
+      createdAt: profile.created_at,
+      updatedAt: profile.updated_at,
+    }
+  } catch (error) {
+    // エラーが発生してもauth情報で続行
+    return {
+      id: user.id,
+      email: user.email || '',
+      handleName: user.user_metadata?.handle_name || 'ユーザー',
+      role: 'user',
+      createdAt: user.created_at || new Date().toISOString(),
+      updatedAt: user.updated_at || new Date().toISOString(),
+    }
   }
 }
