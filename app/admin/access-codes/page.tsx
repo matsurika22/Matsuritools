@@ -98,9 +98,9 @@ export default function AccessCodesPage() {
       alert('アクセスコードを作成しました')
       await loadData()
       resetForm()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating access code:', error)
-      alert('アクセスコードの作成に失敗しました')
+      alert(`アクセスコードの作成に失敗しました: ${error.message || 'Unknown error'}`)
     } finally {
       setSubmitting(false)
     }
@@ -124,9 +124,9 @@ export default function AccessCodesPage() {
       alert('アクセスコードを更新しました')
       await loadData()
       resetForm()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating access code:', error)
-      alert('アクセスコードの更新に失敗しました')
+      alert(`アクセスコードの更新に失敗しました: ${error.message || 'Unknown error'}`)
     } finally {
       setSubmitting(false)
     }
@@ -139,9 +139,9 @@ export default function AccessCodesPage() {
       await deleteAccessCode(code)
       alert('アクセスコードを削除しました')
       await loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting access code:', error)
-      alert('アクセスコードの削除に失敗しました')
+      alert(`アクセスコードの削除に失敗しました: ${error.message || 'Unknown error'}`)
     }
   }
 

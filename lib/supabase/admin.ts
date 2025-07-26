@@ -242,18 +242,27 @@ export async function createAccessCode(accessCode: {
   valid_until?: string
   max_uses?: number
 }) {
-  const { error } = await supabase
+  const user = await supabase.auth.getUser()
+  const insertData = {
+    ...accessCode,
+    current_uses: 0,
+    created_by: user.data.user?.id
+  }
+  
+  console.log('Creating access code:', insertData)
+  
+  const { data, error } = await supabase
     .from('access_codes')
-    .insert({
-      ...accessCode,
-      current_uses: 0,
-      created_by: (await supabase.auth.getUser()).data.user?.id
-    })
+    .insert(insertData)
+    .select()
   
   if (error) {
     console.error('Error creating access code:', error)
     throw error
   }
+  
+  console.log('Access code created:', data)
+  return data
 }
 
 export async function updateAccessCode(code: string, updates: {
