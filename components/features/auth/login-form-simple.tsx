@@ -39,7 +39,7 @@ export function LoginFormSimple() {
         // 少し待ってから強制的にリダイレクト
         setTimeout(() => {
           console.log('リダイレクト実行')
-          window.location.replace('/dashboard-simple')
+          window.location.replace('/dashboard')
         }, 1000)
       }
     } catch (err: any) {

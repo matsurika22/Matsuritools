@@ -1,29 +1,34 @@
 'use client'
 
-import { useRequireAuth } from '@/hooks/use-auth'
-import { Loader2, Shield } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { signOut } from '@/lib/supabase/auth'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Loader2, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
-  const { user, loading } = useRequireAuth()
-  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>('user')
+  const router = useRouter()
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
-        // userオブジェクトにroleが含まれている場合は使用
-        if (user.role) {
-          setUserRole(user.role)
+    const getUser = async () => {
+      try {
+        console.log('[Dashboard] ユーザー情報を取得中...')
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          console.log('[Dashboard] ユーザーが見つかりません。ログインページへ')
+          router.push('/login')
           return
         }
         
-        // roleがない場合のみDBから取得（エラーは無視）
+        console.log('[Dashboard] ユーザー情報取得成功:', user.email)
+        setUser(user)
+        
+        // roleの取得（失敗しても続行）
         try {
           const { data } = await supabase
             .from('users')
@@ -31,17 +36,22 @@ export default function DashboardPage() {
             .eq('id', user.id)
             .maybeSingle()
           
-          if (data) {
-            setUserRole(data.role || 'user')
+          if (data?.role) {
+            setUserRole(data.role)
           }
         } catch (error) {
-          console.log('Role fetch error, using default')
+          console.log('[Dashboard] Role取得エラー（デフォルト値を使用）')
         }
+      } catch (error) {
+        console.error('[Dashboard] エラー:', error)
+        router.push('/login')
+      } finally {
+        setLoading(false)
       }
     }
-    
-    fetchUserRole()
-  }, [user])
+
+    getUser()
+  }, [router])
 
   if (loading) {
     return (
@@ -57,8 +67,8 @@ export default function DashboardPage() {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
-      router.push('/login')
+      await supabase.auth.signOut()
+      window.location.href = '/login'
     } catch (error) {
       console.error('Sign out error:', error)
     }
