@@ -46,8 +46,8 @@ export function AccessCodeForm() {
       setIsLoading(true)
       setError(null)
       
-      console.log('Submitting access code:', data.code)
-      console.log('User ID:', user.id)
+      console.log('[v2] Submitting access code:', data.code)
+      console.log('[v2] User ID:', user.id)
       
       await validateAccessCode(data.code, user.id)
       
