@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Info, Package } from 'lucide-react'
+import { ArrowLeft, Save, Info, Package, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase/client'
@@ -36,6 +36,11 @@ interface Pack {
   box_price?: number
 }
 
+interface AvailablePack {
+  id: string
+  name: string
+}
+
 export default function PackRaritiesPage({ params }: PageProps) {
   const [pack, setPack] = useState<Pack | null>(null)
   const [packRarities, setPackRarities] = useState<PackRarity[]>([])
@@ -43,6 +48,8 @@ export default function PackRaritiesPage({ params }: PageProps) {
   const [saving, setSaving] = useState(false)
   const [editedValues, setEditedValues] = useState<Record<number, { cards_per_box: string; notes: string }>>({})
   const [boxInputs, setBoxInputs] = useState<Record<number, { boxes: string; cards: string }>>({})
+  const [availablePacks, setAvailablePacks] = useState<AvailablePack[]>([])
+  const [showCopyModal, setShowCopyModal] = useState(false)
 
   const loadPackAndRarities = useCallback(async () => {
     try {
@@ -121,7 +128,24 @@ export default function PackRaritiesPage({ params }: PageProps) {
 
   useEffect(() => {
     loadPackAndRarities()
+    // 他の弾一覧を取得
+    loadAvailablePacks()
   }, [loadPackAndRarities])
+
+  const loadAvailablePacks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('packs')
+        .select('id, name')
+        .neq('id', params.packId)
+        .order('name')
+
+      if (error) throw error
+      setAvailablePacks(data || [])
+    } catch (error) {
+      console.error('Error loading available packs:', error)
+    }
+  }
 
   const handleInputChange = (id: number, field: 'cards_per_box' | 'notes', value: string) => {
     setEditedValues(prev => ({
@@ -336,6 +360,56 @@ export default function PackRaritiesPage({ params }: PageProps) {
     }
   }
 
+  // 他の弾の設定をコピー
+  const copyFromOtherPack = async (sourcePackId: string) => {
+    try {
+      setSaving(true)
+
+      // コピー元の封入率データを取得
+      const { data: sourceRarities, error: fetchError } = await supabase
+        .from('pack_rarities')
+        .select('rarity_id, cards_per_box, notes, box_input_x, box_input_y')
+        .eq('pack_id', sourcePackId)
+
+      if (fetchError) throw fetchError
+      if (!sourceRarities || sourceRarities.length === 0) {
+        alert('コピー元の弾に封入率データがありません')
+        return
+      }
+
+      // コピー先に既存のデータがない場合は初期化
+      if (packRarities.length === 0) {
+        await initializePackRarities()
+      }
+
+      // 各レアリティの設定をコピー
+      for (const sourceRarity of sourceRarities) {
+        const { error: updateError } = await supabase
+          .from('pack_rarities')
+          .update({
+            cards_per_box: sourceRarity.cards_per_box,
+            notes: sourceRarity.notes,
+            box_input_x: sourceRarity.box_input_x,
+            box_input_y: sourceRarity.box_input_y
+          })
+          .eq('pack_id', params.packId)
+          .eq('rarity_id', sourceRarity.rarity_id)
+
+        if (updateError) {
+          console.error('Error updating rarity:', updateError)
+        }
+      }
+
+      await loadPackAndRarities()
+      alert('封入率設定をコピーしました')
+    } catch (error) {
+      console.error('Error copying pack rarities:', error)
+      alert('封入率設定のコピーに失敗しました')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -388,22 +462,68 @@ export default function PackRaritiesPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* 一括保存ボタン */}
-      {packRarities.length > 0 && Object.keys(editedValues).length > 0 && (
-        <div className="flex justify-end">
+      {/* アクションボタン */}
+      <div className="flex justify-between items-center">
+        {/* 他の弾からコピーボタン */}
+        {availablePacks.length > 0 && (
+          <div className="relative">
+            <Button
+              onClick={() => setShowCopyModal(!showCopyModal)}
+              variant="outline"
+              disabled={saving}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              他の弾からコピー
+            </Button>
+            
+            {/* コピー元選択モーダル */}
+            {showCopyModal && (
+              <div className="absolute top-full mt-2 left-0 z-10 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="text-sm font-medium mb-3">コピー元の弾を選択</h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {availablePacks.map((availablePack) => (
+                    <Button
+                      key={availablePack.id}
+                      onClick={() => {
+                        copyFromOtherPack(availablePack.id)
+                        setShowCopyModal(false)
+                      }}
+                      variant="ghost"
+                      className="w-full justify-start text-sm"
+                      disabled={saving}
+                    >
+                      {availablePack.name}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  onClick={() => setShowCopyModal(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 w-full"
+                >
+                  キャンセル
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 一括保存ボタン */}
+        {packRarities.length > 0 && Object.keys(editedValues).length > 0 && (
           <Button
             onClick={handleSaveAll}
             disabled={saving || !Object.keys(editedValues).some(id => {
               const pr = packRarities.find(p => p.id === parseInt(id))
               return pr && hasChanges(pr)
             })}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 ml-auto"
           >
             <Save className="mr-2 h-4 w-4" />
             変更をすべて保存
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 使い方の説明 */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4 mb-4">

@@ -260,8 +260,11 @@ export class SheetsSyncService {
           continue
         }
 
+        // 新しいカードID形式: pack_id + "__" + card_number
+        const cardId = `${card.pack_id}__${card.card_number}`
+
         const cardData = {
-          id: card.card_number || `${card.pack_id}_${card.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          id: cardId,
           name: card.name,
           card_number: card.card_number,
           pack_id: card.pack_id,
@@ -316,8 +319,11 @@ export class SheetsSyncService {
       const rarityId = rarityMap.get(card.rarity)
       if (!rarityId) continue
 
+      // 新しいカードID形式: pack_id + "__" + card_number
+      const cardId = `${card.pack_id}__${card.card_number}`
+
       const cardData = {
-        id: card.card_number || `${card.pack_id}_${card.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        id: cardId,
         name: card.name,
         card_number: card.card_number,
         pack_id: card.pack_id,
