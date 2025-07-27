@@ -85,24 +85,53 @@ export default function ResultPage({ params }: PageProps) {
         
         setPrices(userPrices)
 
-        // ユーザー価格がない場合はデータベースの価格を使用
-        const finalPrices = new Map(userPrices)
-        if (userPrices.size === 0) {
-          console.log('No user prices found, using database prices')
-          cardList.forEach(card => {
-            if (!finalPrices.has(card.id)) {
-              finalPrices.set(card.id, card.parameters?.buyback_price || 0)
-            }
-          })
-        }
+        // ユーザー価格と買取価格をマージ（ユーザー価格を優先、なければ買取価格を使用）
+        const finalPrices = new Map<string, number>()
+        console.log('Merging prices for calculation:')
+        
+        cardList.forEach(card => {
+          if (userPrices.has(card.id)) {
+            finalPrices.set(card.id, userPrices.get(card.id)!)
+          } else {
+            // 買取価格を使用
+            const buybackPrice = card.parameters?.buyback_price || 0
+            finalPrices.set(card.id, buybackPrice)
+          }
+        })
+        
+        console.log(`Final prices: ${finalPrices.size} (User: ${userPrices.size}, Buyback: ${finalPrices.size - userPrices.size})`)
 
-        // 価格が設定されているカードのみをフィルタリング（表示されていたカードのみ）
-        const cardsWithPrices = cardList.filter(card => finalPrices.has(card.id))
-        console.log(`Calculating with ${cardsWithPrices.length} cards that have prices (out of ${cardList.length} total)`)
+        // 管理者設定カードとユーザー選択カードのIDを取得
+        const customCardIds = packData?.custom_card_ids || []
+        const displayedCardsParam = searchParams.get('displayedCards')
+        const displayedCardsCount = displayedCardsParam ? parseInt(displayedCardsParam) : 0
+        
+        // 計算対象のカードをフィルタリング
+        let cardsForCalculation: Card[]
+        
+        if (displayedCardsCount > 0) {
+          // 管理者設定カードとユーザーが価格を保存したカードのみを使用
+          const calculationCardIds = new Set<string>([
+            ...customCardIds,
+            ...Array.from(userPrices.keys())
+          ])
+          
+          cardsForCalculation = cardList.filter(card => 
+            calculationCardIds.has(card.id) && finalPrices.get(card.id)! > 0
+          )
+          
+          console.log(`Using selected cards: ${cardsForCalculation.length} (custom: ${customCardIds.length}, user prices: ${userPrices.size})`)
+        } else {
+          // 価格が設定されているカードすべてを使用（従来の動作）
+          cardsForCalculation = cardList.filter(card => finalPrices.get(card.id)! > 0)
+          console.log(`Using all cards with prices: ${cardsForCalculation.length}`)
+        }
+        
+        console.log(`Calculating with ${cardsForCalculation.length} cards (out of ${cardList.length} total)`)
 
         // 期待値を計算
         const { expectedValue, profitProbability } = await calculateExpectedValue(
-          cardsWithPrices,
+          cardsForCalculation,
           finalPrices,
           boxPrice
         )
@@ -124,7 +153,7 @@ export default function ResultPage({ params }: PageProps) {
           expectedValue,
           profitProbability,
           boxPrice,
-          totalCards: cardsWithPrices.length,
+          totalCards: cardsForCalculation.length,
           pricesEntered: userPrices.size
         })
       } catch (error) {

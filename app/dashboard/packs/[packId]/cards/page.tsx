@@ -235,13 +235,20 @@ export default function CardsPage({ params }: PageProps) {
       
       console.log(`計算対象カード: 管理者設定=${customCardIds.length}個, ユーザー追加=${selectedCards.size}個, 合計=${calculationCardIds.size}個`)
       
-      // 計算対象カードの価格のみを抽出
-      const priceData = Array.from(prices.entries())
-        .filter(([cardId]) => calculationCardIds.has(cardId))
-        .map(([cardId, price]) => ({
-          cardId,
-          price
-        }))
+      // ユーザーが変更した価格のみを保存（買取価格と異なる価格のみ）
+      const priceData: { cardId: string; price: number }[] = []
+      
+      prices.forEach((price, cardId) => {
+        const card = cards.find(c => c.id === cardId)
+        const buybackPrice = card?.parameters?.buyback_price || 0
+        
+        // 買取価格と異なる価格、または計算対象カードの価格は保存
+        if (price !== buybackPrice || calculationCardIds.has(cardId)) {
+          priceData.push({ cardId, price })
+        }
+      })
+      
+      console.log(`Saving ${priceData.length} prices (out of ${prices.size} total, ${prices.size - priceData.length} are default buyback prices)`)
       
       // ログインユーザーの場合のみ価格を保存
       if (user) {
