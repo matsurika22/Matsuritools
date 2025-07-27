@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase/client'
 import { getPackCards, getUserPrices, saveUserPrices, calculateExpectedValue } from '@/lib/supabase/cards'
 import { CardPriceList } from '@/components/features/cards/card-price-list'
+import { useGuestAuth } from '@/hooks/use-guest-auth'
 import type { Card, Pack } from '@/types/cards'
 
 interface PageProps {
@@ -32,16 +33,29 @@ export default function CardsPage({ params }: PageProps) {
   const [rarities, setRarities] = useState<any[]>([]) // レアリティマスター
   const [tenYenExpanded, setTenYenExpanded] = useState(false) // 10円のカード達の開閉状態
   const router = useRouter()
+  const { guestSession, isGuest, initializeGuest } = useGuestAuth()
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // ゲストセッションをチェック
+        initializeGuest()
+        
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        
+        // ログインユーザーもゲストユーザーもいない場合
+        if (!user && !guestSession) {
           router.push('/login')
           return
         }
+        
+        // ゲストユーザーの場合、パックIDをチェック
+        if (!user && guestSession && guestSession.packId !== params.packId) {
+          router.push('/guest/access-code')
+          return
+        }
+        
         setUser(user)
 
         // パック情報を取得
@@ -99,8 +113,8 @@ export default function CardsPage({ params }: PageProps) {
         
         setRarities(sortedRarities)
 
-        // ユーザーの保存済み価格を取得
-        const userPrices = await getUserPrices(user.id, params.packId)
+        // ユーザーの保存済み価格を取得（ゲストの場合は空のMapを使用）
+        const userPrices = user ? await getUserPrices(user.id, params.packId) : new Map()
         
         // ユーザー価格がない場合はデータベースの買取価格を初期値とする（なければ0円）
         if (userPrices.size === 0) {
@@ -135,7 +149,7 @@ export default function CardsPage({ params }: PageProps) {
     }
 
     loadData()
-  }, [params.packId, router])
+  }, [params.packId, router, guestSession])
 
   const handlePriceChange = (cardId: string, value: string) => {
     const price = parseInt(value) || 0
@@ -155,8 +169,6 @@ export default function CardsPage({ params }: PageProps) {
   }
 
   const handleSave = async () => {
-    if (!user) return
-
     try {
       setSaving(true)
       
@@ -183,11 +195,16 @@ export default function CardsPage({ params }: PageProps) {
           price
         }))
       
-      // 価格を保存
-      await saveUserPrices(user.id, priceData)
+      // ログインユーザーの場合のみ価格を保存
+      if (user) {
+        await saveUserPrices(user.id, priceData)
+        console.log(`Saved ${priceData.length} prices for user ${user.id} (out of ${prices.size} total)`)
+      }
       
-      // 保存が確実に完了したことを確認
-      console.log(`Saved ${priceData.length} prices for user ${user.id} (out of ${prices.size} total)`)
+      // ゲストユーザーの場合は価格をセッションストレージに保存
+      if (isGuest) {
+        sessionStorage.setItem(`guest_prices_${params.packId}`, JSON.stringify(priceData))
+      }
       
       // 少し待機してから期待値計算画面へ遷移
       setTimeout(() => {

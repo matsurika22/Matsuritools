@@ -61,6 +61,17 @@ export default function Home() {
             </Button>
           </Link>
         </div>
+        
+        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            アクセスコードをお持ちの方
+          </p>
+          <Link href="/guest/access-code" className="w-full sm:w-auto">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+              ゲストとして利用する
+            </Button>
+          </Link>
+        </div>
       </div>
     </main>
   )

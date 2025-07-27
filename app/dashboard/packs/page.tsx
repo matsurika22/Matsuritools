@@ -7,6 +7,7 @@ import { Loader2, ArrowLeft, Package, Calendar, Coins } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
 import { getUserAccessiblePacks } from '@/lib/supabase/access-codes'
+import { useGuestAuth } from '@/hooks/use-guest-auth'
 import type { Pack } from '@/types/access-code'
 
 export default function PacksPage() {
@@ -14,19 +15,40 @@ export default function PacksPage() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
+  const { guestSession, isGuest, initializeGuest } = useGuestAuth()
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // ゲストセッションをチェック
+        initializeGuest()
+        
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        
+        // ログインユーザーもゲストユーザーもいない場合
+        if (!user && !guestSession) {
           router.push('/login')
           return
         }
+        
+        // ゲストユーザーの場合
+        if (!user && guestSession) {
+          // ゲストセッションからパック情報を作成
+          setPacks([{
+            id: guestSession.packId,
+            name: guestSession.packName,
+            releaseDate: null,
+            boxPrice: null,
+            packsPerBox: null
+          } as Pack])
+          setLoading(false)
+          return
+        }
+        
         setUser(user)
 
-        // アクセス可能な弾を取得
+        // 通常ユーザーの場合、アクセス可能な弾を取得
         const accessiblePacks = await getUserAccessiblePacks(user.id)
         setPacks(accessiblePacks)
       } catch (error) {
@@ -37,7 +59,7 @@ export default function PacksPage() {
     }
 
     loadData()
-  }, [router])
+  }, [router, guestSession])
 
   if (loading) {
     return (
@@ -59,12 +81,14 @@ export default function PacksPage() {
             </Button>
           </Link>
           
-          <Link href="/access-code">
-            <Button variant="outline" size="sm">
-              <span className="hidden sm:inline">新しいコードを追加</span>
-              <span className="sm:hidden">コード追加</span>
-            </Button>
-          </Link>
+          {!isGuest && (
+            <Link href="/access-code">
+              <Button variant="outline" size="sm">
+                <span className="hidden sm:inline">新しいコードを追加</span>
+                <span className="sm:hidden">コード追加</span>
+              </Button>
+            </Link>
+          )}
         </div>
 
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
@@ -77,11 +101,19 @@ export default function PacksPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               アクセス可能な弾がありません
             </p>
-            <Link href="/access-code">
-              <Button>
-                アクセスコードを登録
-              </Button>
-            </Link>
+            {isGuest ? (
+              <Link href="/register">
+                <Button>
+                  会員登録して利用する
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/access-code">
+                <Button>
+                  アクセスコードを登録
+                </Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">

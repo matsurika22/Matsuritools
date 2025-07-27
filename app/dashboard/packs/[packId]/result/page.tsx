@@ -7,6 +7,7 @@ import { Loader2, ArrowLeft, TrendingUp, TrendingDown, Coins, Package, BarChart3
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
 import { getPackCards, getUserPrices, calculateExpectedValue } from '@/lib/supabase/cards'
+import { useGuestAuth } from '@/hooks/use-guest-auth'
 import type { Card, Pack, CalculationResult } from '@/types/cards'
 
 interface PageProps {
@@ -22,14 +23,26 @@ export default function ResultPage({ params }: PageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const boxPrice = parseInt(searchParams.get('boxPrice') || '0')
+  const { guestSession, isGuest, initializeGuest } = useGuestAuth()
 
   useEffect(() => {
     const calculateResult = async () => {
       try {
+        // ゲストセッションをチェック
+        initializeGuest()
+        
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        
+        // ログインユーザーもゲストユーザーもいない場合
+        if (!user && !guestSession) {
           router.push('/login')
+          return
+        }
+        
+        // ゲストユーザーの場合、パックIDをチェック
+        if (!user && guestSession && guestSession.packId !== params.packId) {
+          router.push('/guest/access-code')
           return
         }
 
@@ -48,9 +61,26 @@ export default function ResultPage({ params }: PageProps) {
         const cardList = await getPackCards(params.packId)
         setCards(cardList)
 
-        // ユーザーの価格を取得
-        const userPrices = await getUserPrices(user.id, params.packId)
-        console.log(`Result page: Got ${userPrices.size} user prices`)
+        // ユーザーの価格を取得（ゲストの場合はセッションストレージから）
+        let userPrices: Map<string, number>
+        
+        if (user) {
+          userPrices = await getUserPrices(user.id, params.packId)
+          console.log(`Result page: Got ${userPrices.size} user prices for logged in user`)
+        } else if (isGuest) {
+          // ゲストユーザーの場合、セッションストレージから価格を取得
+          const guestPricesData = sessionStorage.getItem(`guest_prices_${params.packId}`)
+          if (guestPricesData) {
+            const guestPricesArray = JSON.parse(guestPricesData)
+            userPrices = new Map(guestPricesArray.map((item: any) => [item.cardId, item.price]))
+            console.log(`Result page: Got ${userPrices.size} prices from guest session`)
+          } else {
+            userPrices = new Map()
+          }
+        } else {
+          userPrices = new Map()
+        }
+        
         setPrices(userPrices)
 
         // ユーザー価格がない場合はデータベースの価格を使用
@@ -75,16 +105,18 @@ export default function ResultPage({ params }: PageProps) {
           boxPrice
         )
 
-        // 計算ログを保存
-        await supabase
-          .from('calculation_logs')
-          .insert({
-            user_id: user.id,
-            pack_id: params.packId,
-            box_price: boxPrice,
-            expected_value: expectedValue,
-            profit_probability: profitProbability
-          })
+        // 計算ログを保存（ログインユーザーのみ）
+        if (user) {
+          await supabase
+            .from('calculation_logs')
+            .insert({
+              user_id: user.id,
+              pack_id: params.packId,
+              box_price: boxPrice,
+              expected_value: expectedValue,
+              profit_probability: profitProbability
+            })
+        }
 
         setResult({
           expectedValue,
@@ -105,7 +137,7 @@ export default function ResultPage({ params }: PageProps) {
     } else {
       router.push(`/dashboard/packs/${params.packId}/cards`)
     }
-  }, [params.packId, boxPrice, router])
+  }, [params.packId, boxPrice, router, guestSession])
 
   if (loading) {
     return (
