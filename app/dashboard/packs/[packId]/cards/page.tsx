@@ -94,6 +94,17 @@ export default function CardsPage({ params }: PageProps) {
         // カード一覧を取得
         const cardList = await getPackCards(params.packId)
         console.log('Cards loaded:', cardList.length, 'cards')
+        // 最初の5枚のカードデータ構造を確認
+        console.log('First 5 cards structure:')
+        cardList.slice(0, 5).forEach(card => {
+          console.log({
+            id: card.id,
+            name: card.name,
+            cardNumber: card.cardNumber,
+            parameters: card.parameters,
+            parametersType: typeof card.parameters
+          })
+        })
         setCards(cardList)
 
         // レアリティマスターを取得し、数値順でソート
@@ -121,13 +132,19 @@ export default function CardsPage({ params }: PageProps) {
         // ユーザー価格がない場合はデータベースの買取価格を初期値とする（なければ0円）
         if (userPrices.size === 0) {
           const initialPrices = new Map<string, number>()
+          console.log('Setting initial prices from buyback prices:')
           cardList.forEach(card => {
             // parametersフィールドから買取価格を取得、なければ0
             const buybackPrice = card.parameters?.buyback_price || 0
+            if (buybackPrice > 0) {
+              console.log(`${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
+            }
             initialPrices.set(card.id, buybackPrice)
           })
+          console.log('Total initial prices set:', initialPrices.size)
           setPrices(initialPrices)
         } else {
+          console.log('Using saved user prices:', userPrices.size)
           setPrices(userPrices)
         }
         
