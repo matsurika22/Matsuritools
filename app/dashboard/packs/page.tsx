@@ -20,8 +20,10 @@ export default function PacksPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // ゲストセッションをチェック
-        initializeGuest()
+        // ゲストセッションを初期化（一度だけ）
+        if (!isGuest) {
+          initializeGuest()
+        }
         
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
@@ -42,15 +44,18 @@ export default function PacksPage() {
             boxPrice: null,
             packsPerBox: null
           } as Pack])
+          setUser(null)
           setLoading(false)
           return
         }
         
-        setUser(user)
-
-        // 通常ユーザーの場合、アクセス可能な弾を取得
-        const accessiblePacks = await getUserAccessiblePacks(user.id)
-        setPacks(accessiblePacks)
+        // 通常ユーザーの場合
+        if (user) {
+          setUser(user)
+          // アクセス可能な弾を取得
+          const accessiblePacks = await getUserAccessiblePacks(user.id)
+          setPacks(accessiblePacks)
+        }
       } catch (error) {
         console.error('Error loading packs:', error)
       } finally {
@@ -59,7 +64,7 @@ export default function PacksPage() {
     }
 
     loadData()
-  }, [router, guestSession])
+  }, [router, isGuest]) // guestSessionではなくisGuestを依存配列に使用
 
   if (loading) {
     return (

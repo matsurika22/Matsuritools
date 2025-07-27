@@ -63,11 +63,13 @@ export async function validateGuestAccessCode(code: string): Promise<ValidateGue
       return { isValid: false, error: 'このアクセスコードの使用回数が上限に達しています' }
     }
 
-    // ゲストアクセスの場合は使用回数をカウントアップ
-    await supabase
-      .from('access_codes')
-      .update({ current_uses: accessCode.current_uses + 1 })
-      .eq('id', accessCode.id)
+    // ゲストアクセスの場合は使用回数をカウントアップ（IDが存在する場合のみ）
+    if (accessCode.id) {
+      await supabase
+        .from('access_codes')
+        .update({ current_uses: accessCode.current_uses + 1 })
+        .eq('id', accessCode.id)
+    }
 
     return { 
       isValid: true, 

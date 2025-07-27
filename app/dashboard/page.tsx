@@ -20,8 +20,10 @@ export default function DashboardPage() {
       try {
         console.log('[Dashboard] ユーザー情報を取得中...')
         
-        // ゲストセッションをチェック
-        initializeGuest()
+        // ゲストセッションを初期化（一度だけ）
+        if (!isGuest) {
+          initializeGuest()
+        }
         
         const { data: { user } } = await supabase.auth.getUser()
         
@@ -74,7 +76,7 @@ export default function DashboardPage() {
     }
 
     getUser()
-  }, [router, guestSession])
+  }, [router, isGuest]) // guestSessionではなくisGuestを依存配列に使用
 
   if (loading) {
     return (

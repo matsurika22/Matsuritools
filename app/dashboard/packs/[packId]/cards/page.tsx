@@ -38,8 +38,10 @@ export default function CardsPage({ params }: PageProps) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // ゲストセッションをチェック
-        initializeGuest()
+        // ゲストセッションを初期化（一度だけ）
+        if (!isGuest) {
+          initializeGuest()
+        }
         
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
@@ -149,7 +151,7 @@ export default function CardsPage({ params }: PageProps) {
     }
 
     loadData()
-  }, [params.packId, router, guestSession])
+  }, [params.packId, router, isGuest]) // guestSessionではなくisGuestを依存配列に使用
 
   const handlePriceChange = (cardId: string, value: string) => {
     const price = parseInt(value) || 0

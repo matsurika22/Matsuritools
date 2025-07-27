@@ -28,8 +28,10 @@ export default function ResultPage({ params }: PageProps) {
   useEffect(() => {
     const calculateResult = async () => {
       try {
-        // ゲストセッションをチェック
-        initializeGuest()
+        // ゲストセッションを初期化（一度だけ）
+        if (!isGuest) {
+          initializeGuest()
+        }
         
         // ユーザー認証チェック
         const { data: { user } } = await supabase.auth.getUser()
@@ -137,7 +139,7 @@ export default function ResultPage({ params }: PageProps) {
     } else {
       router.push(`/dashboard/packs/${params.packId}/cards`)
     }
-  }, [params.packId, boxPrice, router, guestSession])
+  }, [params.packId, boxPrice, router, isGuest]) // guestSessionではなくisGuestを依存配列に使用
 
   if (loading) {
     return (
