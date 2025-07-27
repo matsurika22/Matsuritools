@@ -207,6 +207,17 @@ export function RegisterForm() {
           ログイン
         </Link>
       </p>
+      
+      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+          アクセスコードをお持ちの方
+        </p>
+        <Link href="/guest/access-code" className="w-full">
+          <Button variant="secondary" className="w-full">
+            ゲストとして利用する
+          </Button>
+        </Link>
+      </div>
     </form>
   )
 }
