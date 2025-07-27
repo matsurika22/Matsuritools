@@ -136,10 +136,16 @@ export async function calculateExpectedValue(
   prices: Map<string, number>,
   boxPrice: number
 ): Promise<{ expectedValue: number; profitProbability: number }> {
+  console.log('calculateExpectedValue called with:')
+  console.log(`  - Cards: ${cards.length}`)
+  console.log(`  - Prices: ${prices.size}`)
+  console.log(`  - Box price: ${boxPrice}`)
+  
   // pack_raritiesから封入率情報を取得
   const packId = cards[0]?.packId
   if (!packId) {
     // カードがない場合
+    console.log('No packId found - returning 0')
     return { expectedValue: 0, profitProbability: 0 }
   }
 
@@ -152,18 +158,23 @@ export async function calculateExpectedValue(
     // 新システムでの計算
     const { calculateBoxExpectation, allowsDuplicates } = await import('@/lib/utils/expectation-calculator')
     
-    const cardsWithPrices = cards.map(card => ({
-      id: card.id,
-      name: card.name,
-      rarity: card.rarity ? {
-        name: card.rarity.name,
-        color: card.rarity.color || '#808080'
-      } : {
-        name: 'Unknown',
-        color: '#808080'
-      },
-      buyback_price: prices.get(card.id) || 0
-    }))
+    const cardsWithPrices = cards.map(card => {
+      const price = prices.get(card.id) || 0
+      return {
+        id: card.id,
+        name: card.name,
+        rarity: card.rarity ? {
+          name: card.rarity.name,
+          color: card.rarity.color || '#808080'
+        } : {
+          name: 'Unknown',
+          color: '#808080'
+        },
+        buyback_price: price
+      }
+    })
+    
+    console.log('Cards with prices sample:', cardsWithPrices.slice(0, 3).map(c => `${c.name}: ¥${c.buyback_price}`))
     
     const rarityInfo = packRarities.map(pr => ({
       rarity_name: pr.rarity_name,
@@ -172,11 +183,15 @@ export async function calculateExpectedValue(
       allows_duplicates: allowsDuplicates(pr.rarity_name)
     }))
     
+    console.log('Rarity info:', rarityInfo)
+    
     const result = calculateBoxExpectation(
       cardsWithPrices,
       rarityInfo,
       boxPrice
     )
+    
+    console.log('Calculation result:', result)
     
     return {
       expectedValue: Math.round(result.expectedValue),

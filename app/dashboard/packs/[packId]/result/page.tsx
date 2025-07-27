@@ -106,39 +106,14 @@ export default function ResultPage({ params }: PageProps) {
         const displayedCardsParam = searchParams.get('displayedCards')
         const displayedCardsCount = displayedCardsParam ? parseInt(displayedCardsParam) : 0
         
-        // 計算対象のカードをフィルタリング
-        let cardsForCalculation: Card[]
-        
-        if (displayedCardsCount > 0) {
-          // カードページから渡された計算対象カードIDを復元
-          // 注：ユーザーが価格を保存したカードだけでなく、買取価格があるカードも含む必要がある
-          const savedCalculationIds = sessionStorage.getItem(`calculation_cards_${params.packId}`)
-          
-          if (savedCalculationIds) {
-            // セッションストレージから計算対象カードIDを取得
-            const calculationCardIds = new Set<string>(JSON.parse(savedCalculationIds))
-            cardsForCalculation = cardList.filter(card => 
-              calculationCardIds.has(card.id) && finalPrices.get(card.id)! > 0
-            )
-            console.log(`Using saved calculation cards: ${cardsForCalculation.length} cards`)
-          } else {
-            // フォールバック：価格が設定されているカードをすべて使用
-            console.log('No saved calculation cards, using all cards with prices')
-            
-            cardsForCalculation = cardList.filter(card => {
-              const price = finalPrices.get(card.id) || 0
-              return price > 0
-            })
-            
-            console.log(`Using fallback: ${cardsForCalculation.length} cards with prices > 0`)
-          }
-        } else {
-          // 価格が設定されているカードすべてを使用（従来の動作）
-          cardsForCalculation = cardList.filter(card => finalPrices.get(card.id)! > 0)
-          console.log(`Using all cards with prices: ${cardsForCalculation.length}`)
-        }
+        // 価格が設定されているカードを全て使用（買取価格またはユーザー価格）
+        const cardsForCalculation = cardList.filter(card => {
+          const price = finalPrices.get(card.id) || 0
+          return price > 0
+        })
         
         console.log(`Calculating with ${cardsForCalculation.length} cards (out of ${cardList.length} total)`)
+        console.log(`Cards with prices: ${cardsForCalculation.map(c => `${c.card_number}(¥${finalPrices.get(c.id)})`).slice(0, 5).join(', ')}...`)
 
         // 期待値を計算
         const { expectedValue, profitProbability } = await calculateExpectedValue(
