@@ -94,18 +94,34 @@ export default function CardsPage({ params }: PageProps) {
         // カード一覧を取得
         const cardList = await getPackCards(params.packId)
         console.log('Cards loaded:', cardList.length, 'cards')
+        
         // 最初の5枚のカードデータ構造を確認
         console.log('First 5 cards structure:')
-        cardList.slice(0, 5).forEach(card => {
-          console.log(JSON.stringify({
-            id: card.id,
-            name: card.name,
-            cardNumber: card.cardNumber,
-            parameters: card.parameters,
-            parametersType: typeof card.parameters,
-            buybackPrice: card.parameters?.buyback_price
-          }, null, 2))
+        cardList.slice(0, 5).forEach((card, index) => {
+          console.log(`Card ${index + 1}:`)
+          console.log('  ID:', card.id)
+          console.log('  Name:', card.name)
+          console.log('  CardNumber:', card.cardNumber)
+          console.log('  Parameters:', card.parameters)
+          console.log('  Parameters type:', typeof card.parameters)
+          console.log('  Parameters is null?', card.parameters === null)
+          console.log('  Parameters is undefined?', card.parameters === undefined)
+          console.log('  Parameters keys:', card.parameters ? Object.keys(card.parameters) : 'N/A')
+          console.log('  Buyback price:', card.parameters?.buyback_price)
         })
+        
+        // 買取価格がある全てのカードを探す
+        const cardsWithBuybackPrice = cardList.filter(card => 
+          card.parameters && card.parameters.buyback_price && card.parameters.buyback_price > 0
+        )
+        console.log(`Cards with buyback price: ${cardsWithBuybackPrice.length} out of ${cardList.length}`)
+        if (cardsWithBuybackPrice.length > 0) {
+          console.log('Sample cards with buyback price:')
+          cardsWithBuybackPrice.slice(0, 5).forEach(card => {
+            console.log(`  ${card.cardNumber}: ${card.name} => ${card.parameters.buyback_price}円`)
+          })
+        }
+        
         setCards(cardList)
 
         // レアリティマスターを取得し、数値順でソート
@@ -133,22 +149,36 @@ export default function CardsPage({ params }: PageProps) {
         // ユーザー価格と買取価格をマージ（ユーザー価格を優先、なければ買取価格を使用）
         const mergedPrices = new Map<string, number>()
         console.log('Merging user prices with buyback prices:')
+        console.log(`User prices count: ${userPrices.size}`)
+        
+        let buybackPriceCount = 0
+        let zeroPriceCount = 0
         
         cardList.forEach(card => {
           // ユーザーが保存した価格があればそれを使用
           if (userPrices.has(card.id)) {
-            mergedPrices.set(card.id, userPrices.get(card.id)!)
+            const userPrice = userPrices.get(card.id)!
+            mergedPrices.set(card.id, userPrice)
+            console.log(`User price for ${card.cardNumber}: ${card.name} => ${userPrice}円`)
           } else {
             // なければparametersフィールドから買取価格を取得、なければ0
             const buybackPrice = card.parameters?.buyback_price || 0
             if (buybackPrice > 0) {
+              buybackPriceCount++
               console.log(`Using buyback price for ${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
+            } else {
+              zeroPriceCount++
             }
             mergedPrices.set(card.id, buybackPrice)
           }
         })
         
-        console.log(`Total prices: ${mergedPrices.size} (User: ${userPrices.size}, Buyback: ${mergedPrices.size - userPrices.size})`)
+        console.log(`Price summary:`)
+        console.log(`  - Total cards: ${cardList.length}`)
+        console.log(`  - User prices: ${userPrices.size}`)
+        console.log(`  - Buyback prices: ${buybackPriceCount}`)
+        console.log(`  - Zero prices: ${zeroPriceCount}`)
+        console.log(`  - Total merged: ${mergedPrices.size}`)
         setPrices(mergedPrices)
         
         // カードの最終更新日時を取得（カードデータの最新の更新日時）

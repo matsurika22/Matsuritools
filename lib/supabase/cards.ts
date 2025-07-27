@@ -17,6 +17,20 @@ export async function getPackCards(packId: string): Promise<Card[]> {
     return []
   }
 
+  console.log(`getPackCards: Retrieved ${data?.length || 0} cards for pack ${packId}`)
+  
+  // 最初の3枚のRAWデータを確認
+  if (data && data.length > 0) {
+    console.log('First 3 cards RAW data from DB:')
+    data.slice(0, 3).forEach((card, index) => {
+      console.log(`RAW Card ${index + 1}:`)
+      console.log('  id:', card.id)
+      console.log('  name:', card.name)
+      console.log('  parameters:', card.parameters)
+      console.log('  parameters type:', typeof card.parameters)
+    })
+  }
+
   // raritiesを展開し、parametersも含める
   // snake_caseからcamelCaseに変換
   return (data || []).map(card => ({
