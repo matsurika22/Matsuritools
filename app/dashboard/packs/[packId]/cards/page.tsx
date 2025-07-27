@@ -174,24 +174,20 @@ export default function CardsPage({ params }: PageProps) {
     try {
       setSaving(true)
       
-      // 表示されているカードとユーザーが追加したカードのみを収集
-      const visibleCardIds = new Set<string>()
-      
-      // 表示レアリティのカードを追加
-      displayRarities.forEach(rarityName => {
-        const rarityCards = cardsByRarity[rarityName] || []
-        rarityCards.forEach(card => visibleCardIds.add(card.id))
-      })
+      // 計算対象のカード：管理者設定カード + ユーザー追加カードのみ
+      const calculationCardIds = new Set<string>()
       
       // カスタムカード（管理者設定）を追加
-      customCardIds.forEach(cardId => visibleCardIds.add(cardId))
+      customCardIds.forEach(cardId => calculationCardIds.add(cardId))
       
       // ユーザーが追加したカードを追加
-      selectedCards.forEach(cardId => visibleCardIds.add(cardId))
+      selectedCards.forEach(cardId => calculationCardIds.add(cardId))
       
-      // 表示されているカードの価格のみを抽出
+      console.log(`計算対象カード: 管理者設定=${customCardIds.length}個, ユーザー追加=${selectedCards.size}個, 合計=${calculationCardIds.size}個`)
+      
+      // 計算対象カードの価格のみを抽出
       const priceData = Array.from(prices.entries())
-        .filter(([cardId]) => visibleCardIds.has(cardId))
+        .filter(([cardId]) => calculationCardIds.has(cardId))
         .map(([cardId, price]) => ({
           cardId,
           price
@@ -210,7 +206,7 @@ export default function CardsPage({ params }: PageProps) {
       
       // 少し待機してから期待値計算画面へ遷移
       setTimeout(() => {
-        router.push(`/dashboard/packs/${params.packId}/result?boxPrice=${boxPrice}&displayedCards=${visibleCardIds.size}`)
+        router.push(`/dashboard/packs/${params.packId}/result?boxPrice=${boxPrice}&displayedCards=${calculationCardIds.size}`)
       }, 100)
     } catch (error) {
       console.error('Error saving prices:', error)
@@ -249,25 +245,11 @@ export default function CardsPage({ params }: PageProps) {
     })
   }
   
-  // レアリティの表示名マッピング（手動で設定）
-  const rarityDisplayNames: Record<string, string> = {
-    'C': 'コモン',
-    'U': 'アンコモン',
-    'R': 'レア',
-    'VR': 'ベリーレア',
-    'SR': 'スーパーレア',
-    'MR': 'マスターレア',
-    'T': '黒トレジャー',
-    'DM': 'ドリームレア',
-    'OR': 'オーバーレア',
-    'UC': 'アンコモン',
-    'DM㉿': 'シークレットドリームレア',
-    '㉿': 'シークレットレア',
-    'TD': 'キャラプレミアムトレジャー',
-    'SP': '金トレジャー',
-    'TR': '銀トレジャー',
-    'S': 'シークレットレア'
-  }
+  // レアリティの表示名マッピング（データベースから取得）
+  const rarityDisplayNames: Record<string, string> = {}
+  rarities.forEach(rarity => {
+    rarityDisplayNames[rarity.name] = rarity.display_name || rarity.name
+  })
   
   console.log('rarities debug:', rarities.map(r => ({ 
     name: r.name, 
@@ -305,9 +287,15 @@ export default function CardsPage({ params }: PageProps) {
   // 各レアリティ内でカード番号を数値ソート
   Object.keys(cardsByRarity).forEach(rarityName => {
     cardsByRarity[rarityName].sort((a, b) => {
-      // カード番号から数値部分を抽出して数値ソート
-      const numA = parseInt(a.cardNumber.split('/')[0]) || 0
-      const numB = parseInt(b.cardNumber.split('/')[0]) || 0
+      // カード番号から数値部分を抽出して数値ソート（特殊文字対応）
+      const extractNumber = (cardNumber: string) => {
+        // ㊙1/㊙24 のような形式から数字部分を抽出
+        const match = cardNumber.match(/[㊙]?(\d+)/)
+        return match ? parseInt(match[1]) : 0
+      }
+      
+      const numA = extractNumber(a.cardNumber)
+      const numB = extractNumber(b.cardNumber)
       return numA - numB
     })
   })
@@ -349,9 +337,15 @@ export default function CardsPage({ params }: PageProps) {
     // 各レアリティ内でカード番号を数値ソート
     Object.keys(tenYenCardsByRarity).forEach(rarityName => {
       tenYenCardsByRarity[rarityName].sort((a, b) => {
-        // カード番号から数値部分を抽出して数値ソート
-        const numA = parseInt(a.cardNumber.split('/')[0]) || 0
-        const numB = parseInt(b.cardNumber.split('/')[0]) || 0
+        // カード番号から数値部分を抽出して数値ソート（特殊文字対応）
+        const extractNumber = (cardNumber: string) => {
+          // ㊙1/㊙24 のような形式から数字部分を抽出
+          const match = cardNumber.match(/[㊙]?(\d+)/)
+          return match ? parseInt(match[1]) : 0
+        }
+        
+        const numA = extractNumber(a.cardNumber)
+        const numB = extractNumber(b.cardNumber)
         return numA - numB
       })
     })
