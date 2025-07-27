@@ -101,15 +101,31 @@ export default function ResultPage({ params }: PageProps) {
         
         console.log(`Final prices: ${finalPrices.size} (User: ${userPrices.size}, Buyback: ${finalPrices.size - userPrices.size})`)
 
-        // 管理者設定カードとユーザー選択カードのIDを取得
+        // 管理者設定カードと表示レアリティのIDを取得
         const customCardIds = packData?.custom_card_ids || []
-        const displayedCardsParam = searchParams.get('displayedCards')
-        const displayedCardsCount = displayedCardsParam ? parseInt(displayedCardsParam) : 0
+        const displayRarityIds = packData?.display_rarity_ids || []
         
-        // 価格が設定されているカードを全て使用（買取価格またはユーザー価格）
+        // 表示レアリティのカードIDをセットに変換
+        const displayRarityIdSet = new Set(displayRarityIds.map(id => String(id)))
+        
+        // 計算対象のカードをフィルタリング
+        // 1. 表示レアリティに含まれるカード
+        // 2. カスタムカードに含まれるカード
+        // 3. 価格が設定されているカード
         const cardsForCalculation = cardList.filter(card => {
           const price = finalPrices.get(card.id) || 0
-          return price > 0
+          if (price <= 0) return false
+          
+          // 表示レアリティが設定されている場合
+          if (displayRarityIds.length > 0) {
+            // 表示レアリティに含まれるか、カスタムカードに含まれるか
+            const isDisplayRarity = card.rarity?.id && displayRarityIdSet.has(String(card.rarity.id))
+            const isCustomCard = customCardIds.includes(card.id)
+            return isDisplayRarity || isCustomCard
+          }
+          
+          // 表示レアリティが設定されていない場合は全てのカードを対象に
+          return true
         })
         
         console.log(`Calculating with ${cardsForCalculation.length} cards (out of ${cardList.length} total)`)
