@@ -97,13 +97,14 @@ export default function CardsPage({ params }: PageProps) {
         // 最初の5枚のカードデータ構造を確認
         console.log('First 5 cards structure:')
         cardList.slice(0, 5).forEach(card => {
-          console.log({
+          console.log(JSON.stringify({
             id: card.id,
             name: card.name,
             cardNumber: card.cardNumber,
             parameters: card.parameters,
-            parametersType: typeof card.parameters
-          })
+            parametersType: typeof card.parameters,
+            buybackPrice: card.parameters?.buyback_price
+          }, null, 2))
         })
         setCards(cardList)
 
@@ -129,24 +130,26 @@ export default function CardsPage({ params }: PageProps) {
         // ユーザーの保存済み価格を取得（ゲストの場合は空のMapを使用）
         const userPrices = user ? await getUserPrices(user.id, params.packId) : new Map()
         
-        // ユーザー価格がない場合はデータベースの買取価格を初期値とする（なければ0円）
-        if (userPrices.size === 0) {
-          const initialPrices = new Map<string, number>()
-          console.log('Setting initial prices from buyback prices:')
-          cardList.forEach(card => {
-            // parametersフィールドから買取価格を取得、なければ0
+        // ユーザー価格と買取価格をマージ（ユーザー価格を優先、なければ買取価格を使用）
+        const mergedPrices = new Map<string, number>()
+        console.log('Merging user prices with buyback prices:')
+        
+        cardList.forEach(card => {
+          // ユーザーが保存した価格があればそれを使用
+          if (userPrices.has(card.id)) {
+            mergedPrices.set(card.id, userPrices.get(card.id)!)
+          } else {
+            // なければparametersフィールドから買取価格を取得、なければ0
             const buybackPrice = card.parameters?.buyback_price || 0
             if (buybackPrice > 0) {
-              console.log(`${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
+              console.log(`Using buyback price for ${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
             }
-            initialPrices.set(card.id, buybackPrice)
-          })
-          console.log('Total initial prices set:', initialPrices.size)
-          setPrices(initialPrices)
-        } else {
-          console.log('Using saved user prices:', userPrices.size)
-          setPrices(userPrices)
-        }
+            mergedPrices.set(card.id, buybackPrice)
+          }
+        })
+        
+        console.log(`Total prices: ${mergedPrices.size} (User: ${userPrices.size}, Buyback: ${mergedPrices.size - userPrices.size})`)
+        setPrices(mergedPrices)
         
         // カードの最終更新日時を取得（カードデータの最新の更新日時）
         const { data: latestCard } = await supabase
