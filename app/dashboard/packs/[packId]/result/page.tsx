@@ -110,17 +110,28 @@ export default function ResultPage({ params }: PageProps) {
         let cardsForCalculation: Card[]
         
         if (displayedCardsCount > 0) {
-          // 管理者設定カードとユーザーが価格を保存したカードのみを使用
-          const calculationCardIds = new Set<string>([
-            ...customCardIds,
-            ...Array.from(userPrices.keys())
-          ])
+          // カードページから渡された計算対象カードIDを復元
+          // 注：ユーザーが価格を保存したカードだけでなく、買取価格があるカードも含む必要がある
+          const savedCalculationIds = sessionStorage.getItem(`calculation_cards_${params.packId}`)
           
-          cardsForCalculation = cardList.filter(card => 
-            calculationCardIds.has(card.id) && finalPrices.get(card.id)! > 0
-          )
-          
-          console.log(`Using selected cards: ${cardsForCalculation.length} (custom: ${customCardIds.length}, user prices: ${userPrices.size})`)
+          if (savedCalculationIds) {
+            // セッションストレージから計算対象カードIDを取得
+            const calculationCardIds = new Set<string>(JSON.parse(savedCalculationIds))
+            cardsForCalculation = cardList.filter(card => 
+              calculationCardIds.has(card.id) && finalPrices.get(card.id)! > 0
+            )
+            console.log(`Using saved calculation cards: ${cardsForCalculation.length} cards`)
+          } else {
+            // フォールバック：価格が設定されているカードをすべて使用
+            console.log('No saved calculation cards, using all cards with prices')
+            
+            cardsForCalculation = cardList.filter(card => {
+              const price = finalPrices.get(card.id) || 0
+              return price > 0
+            })
+            
+            console.log(`Using fallback: ${cardsForCalculation.length} cards with prices > 0`)
+          }
         } else {
           // 価格が設定されているカードすべてを使用（従来の動作）
           cardsForCalculation = cardList.filter(card => finalPrices.get(card.id)! > 0)

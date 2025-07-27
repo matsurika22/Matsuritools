@@ -208,6 +208,7 @@ export default function CardsPage({ params }: PageProps) {
     const newPrices = new Map(prices)
     newPrices.set(cardId, price)
     setPrices(newPrices)
+    console.log(`Price changed for ${cardId}: ${price}円 (total prices: ${newPrices.size})`)
   }
 
   const handleResetPrices = () => {
@@ -234,18 +235,15 @@ export default function CardsPage({ params }: PageProps) {
       selectedCards.forEach(cardId => calculationCardIds.add(cardId))
       
       console.log(`計算対象カード: 管理者設定=${customCardIds.length}個, ユーザー追加=${selectedCards.size}個, 合計=${calculationCardIds.size}個`)
+      console.log('管理者設定カードID:', customCardIds)
+      console.log('ユーザー選択カードID:', Array.from(selectedCards))
       
       // ユーザーが変更した価格のみを保存（買取価格と異なる価格のみ）
       const priceData: { cardId: string; price: number }[] = []
       
+      // すべてのカードの価格を保存（後でフィルタリングする方が安全）
       prices.forEach((price, cardId) => {
-        const card = cards.find(c => c.id === cardId)
-        const buybackPrice = card?.parameters?.buyback_price || 0
-        
-        // 買取価格と異なる価格、または計算対象カードの価格は保存
-        if (price !== buybackPrice || calculationCardIds.has(cardId)) {
-          priceData.push({ cardId, price })
-        }
+        priceData.push({ cardId, price })
       })
       
       console.log(`Saving ${priceData.length} prices (out of ${prices.size} total, ${prices.size - priceData.length} are default buyback prices)`)
@@ -260,6 +258,9 @@ export default function CardsPage({ params }: PageProps) {
       if (isGuest) {
         sessionStorage.setItem(`guest_prices_${params.packId}`, JSON.stringify(priceData))
       }
+      
+      // 計算対象カードIDをセッションストレージに保存（結果ページで使用）
+      sessionStorage.setItem(`calculation_cards_${params.packId}`, JSON.stringify(Array.from(calculationCardIds)))
       
       // 少し待機してから期待値計算画面へ遷移
       setTimeout(() => {
