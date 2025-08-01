@@ -131,7 +131,19 @@ export class GoogleSheetsService {
    * 特定の弾のカードデータのみを取得
    */
   async fetchPackCards(packId: string): Promise<CardData[]> {
-    return this.fetchCardData(packId)
+    console.log(`📄 fetchPackCards: ${packId}のデータを取得中...`)
+    const cards = await this.fetchCardData(packId)
+    console.log(`✅ fetchPackCards: ${cards.length}件のカードを取得しました`)
+    
+    // サンプルを表示
+    if (cards.length > 0) {
+      console.log('サンプルデータ:')
+      cards.slice(0, 3).forEach(card => {
+        console.log(`  ${card.card_number}: ${card.name} - 買取: ${card.buyback_price}円`)
+      })
+    }
+    
+    return cards
   }
 
   /**
@@ -172,6 +184,97 @@ export class GoogleSheetsService {
     // 最終更新日時をキャッシュに保存
     // 本来はRedisやSupabaseに保存
     process.env.SHEETS_LAST_UPDATED = timestamp
+  }
+
+  /**
+   * 特定のパックのデータをSupabaseに同期
+   */
+  async syncPackData(pack: any): Promise<number> {
+    // Supabaseクライアントをインポート
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    
+    console.log(`\n🔄 ${pack.name} (${pack.id}) のデータを同期中...`)
+    
+    const cards = await this.fetchPackCards(pack.id)
+    console.log(`📄 スプレッドシートから${cards.length}件のカードを取得`)
+    
+    // サンプルを表示
+    if (cards.length > 0) {
+      console.log('サンプルデータ:')
+      cards.slice(0, 3).forEach(card => {
+        console.log(`  ${card.card_number}: ${card.name} - 買取: ${card.buyback_price}円`)
+      })
+    }
+    
+    let syncedCards = 0
+    let updatedCards = 0
+
+    // レアリティマスターを取得
+    const { data: rarities } = await supabase
+      .from('rarities')
+      .select('id, name')
+    
+    const rarityMap = new Map(rarities?.map((r: any) => [r.name, r.id]) || [])
+
+    // カード情報をデータベースに保存
+    for (const card of cards) {
+      const rarityId = rarityMap.get(card.rarity)
+      if (!rarityId) {
+        console.warn(`⚠️  レアリティ "${card.rarity}" が見つかりません: ${card.name}`)
+        continue
+      }
+
+      // 新しいカードID形式: pack_id + "__" + card_number
+      const cardId = `${card.pack_id}__${card.card_number}`
+
+      // 既存のカードを確認
+      const { data: existingCard } = await supabase
+        .from('cards')
+        .select('parameters')
+        .eq('id', cardId)
+        .single()
+      
+      const isUpdate = existingCard && 
+        existingCard.parameters?.buyback_price !== card.buyback_price
+
+      const cardData = {
+        id: cardId,
+        name: card.name,
+        card_number: card.card_number,
+        pack_id: card.pack_id,
+        rarity_id: rarityId,
+        // 一時的にparametersフィールドに価格情報を保存
+        parameters: {
+          buyback_price: card.buyback_price,
+          reference_price: card.reference_price
+        },
+        updated_at: new Date().toISOString()
+      }
+
+      const { error } = await supabase
+        .from('cards')
+        .upsert(cardData, { onConflict: 'id' })
+      
+      if (error) {
+        console.error(`❌ エラー: ${card.name} - ${error.message}`)
+      } else {
+        syncedCards++
+        if (isUpdate) {
+          updatedCards++
+          // 特定のカードをデバッグ
+          if (card.card_number === '6/77') {
+            console.log(`✅ ${card.name} (${card.card_number}) を更新: ${existingCard.parameters?.buyback_price}円 → ${card.buyback_price}円`)
+          }
+        }
+      }
+    }
+
+    console.log(`✅ ${pack.name}: ${syncedCards}件同期完了 (うち${updatedCards}件更新)`)
+    return syncedCards
   }
 }
 
