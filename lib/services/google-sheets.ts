@@ -126,9 +126,12 @@ export class GoogleSheetsService {
     const sheetName = 'カードマスター'
     
     console.log(`📦 fetchCardData: シート名 = ${sheetName}`)
+    if (packId) {
+      console.log(`🔍 指定されたpackId: ${packId}`)
+    }
     const data = await this.fetchSheetData(`${sheetName}!A2:F5000`)
     
-    return data
+    const allCards = data
       .filter(row => row[0] && row[1] && row[2] && row[3]) // 名前、型番、弾ID、レアリティが必須
       .map((row, index) => ({
         id: row[1] || `${row[2]}_${String(index + 1).padStart(3, '0')}`, // 型番、または弾ID_001 形式
@@ -139,7 +142,21 @@ export class GoogleSheetsService {
         buyback_price: parseInt(row[4] || '0'),
         reference_price: row[5] ? parseInt(row[5]) : undefined
       }))
-      .filter(card => !packId || card.pack_id === packId)
+    
+    if (packId) {
+      // デバッグ: 最初の5件のpack_idを表示
+      console.log(`📊 カードマスターの最初の5件のpack_id:`)
+      allCards.slice(0, 5).forEach(card => {
+        console.log(`  ${card.card_number}: pack_id="${card.pack_id}"`)
+      })
+      
+      const filteredCards = allCards.filter(card => card.pack_id === packId)
+      console.log(`📊 フィルタリング結果: 全${allCards.length}件中、packId="${packId}"に一致するカード${filteredCards.length}件`)
+      
+      return filteredCards
+    }
+    
+    return allCards
   }
 
   /**
