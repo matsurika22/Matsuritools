@@ -29,7 +29,7 @@ export function CardPriceList({ cards, prices, onPriceChange }: CardPriceListPro
               </p>
             </div>
             
-            <div className="flex items-center gap-2 self-end sm:self-center">
+            <div className="flex items-center gap-2">
               <Input
                 type="number"
                 value={prices.get(card.id) || ''}
