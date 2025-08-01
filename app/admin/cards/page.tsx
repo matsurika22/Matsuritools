@@ -87,17 +87,23 @@ export default function CardsPage() {
     try {
       setSyncing(true)
       
+      // Supabaseクライアントをインポート
+      const { supabase } = await import('@/lib/supabase/client')
+      const { data: { session } } = await supabase.auth.getSession()
+      
       // Google Sheetsからデータを同期
       const response = await fetch('/api/sync-sheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': session ? `Bearer ${session.access_token}` : '',
         },
         body: JSON.stringify({ action: 'sync' })
       })
       
       if (!response.ok) {
-        throw new Error('同期に失敗しました')
+        const errorData = await response.json()
+        throw new Error(errorData.error || '同期に失敗しました')
       }
       
       const result = await response.json()

@@ -5,7 +5,8 @@ import { GoogleSheetsService } from '@/lib/services/google-sheets'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     
     // 管理者権限チェック
     const { data: { user } } = await supabase.auth.getUser()
