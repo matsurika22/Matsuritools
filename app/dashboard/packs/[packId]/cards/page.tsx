@@ -143,39 +143,27 @@ export default function CardsPage({ params }: PageProps) {
         
         setRarities(sortedRarities)
 
-        // ユーザーの保存済み価格を取得（ゲストの場合は空のMapを使用）
-        const userPrices = user ? await getUserPrices(user.id, params.packId) : new Map()
-        
-        // ユーザー価格と買取価格をマージ（ユーザー価格を優先、なければ買取価格を使用）
+        // 常に買取価格（デフォルト値）を使用する
         const mergedPrices = new Map<string, number>()
-        console.log('Merging user prices with buyback prices:')
-        console.log(`User prices count: ${userPrices.size}`)
+        console.log('Initializing prices with buyback prices:')
         
         let buybackPriceCount = 0
         let zeroPriceCount = 0
         
         cardList.forEach(card => {
-          // ユーザーが保存した価格があればそれを使用
-          if (userPrices.has(card.id)) {
-            const userPrice = userPrices.get(card.id)!
-            mergedPrices.set(card.id, userPrice)
-            console.log(`User price for ${card.cardNumber}: ${card.name} => ${userPrice}円`)
+          // 常にparametersフィールドから買取価格を取得、なければ0
+          const buybackPrice = card.parameters?.buyback_price || 0
+          if (buybackPrice > 0) {
+            buybackPriceCount++
+            console.log(`Using buyback price for ${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
           } else {
-            // なければparametersフィールドから買取価格を取得、なければ0
-            const buybackPrice = card.parameters?.buyback_price || 0
-            if (buybackPrice > 0) {
-              buybackPriceCount++
-              console.log(`Using buyback price for ${card.cardNumber}: ${card.name} => ${buybackPrice}円`)
-            } else {
-              zeroPriceCount++
-            }
-            mergedPrices.set(card.id, buybackPrice)
+            zeroPriceCount++
           }
+          mergedPrices.set(card.id, buybackPrice)
         })
         
         console.log(`Price summary:`)
         console.log(`  - Total cards: ${cardList.length}`)
-        console.log(`  - User prices: ${userPrices.size}`)
         console.log(`  - Buyback prices: ${buybackPriceCount}`)
         console.log(`  - Zero prices: ${zeroPriceCount}`)
         console.log(`  - Total merged: ${mergedPrices.size}`)
