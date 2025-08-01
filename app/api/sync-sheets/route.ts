@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     
     // 管理者ロールチェック
     const { data: profile } = await supabaseAdmin
-      .from('user_profiles')
+      .from('users')
       .select('role')
       .eq('id', user.id)
       .single()
