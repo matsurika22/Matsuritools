@@ -34,12 +34,14 @@ export function CardPriceList({ cards, prices, onPriceChange }: CardPriceListPro
                 type="number"
                 value={prices.get(card.id) || ''}
                 onChange={(e) => onPriceChange(card.id, e.target.value)}
-                className="w-28 text-right"
+                className="w-32 text-right"
                 placeholder="0"
                 min="0"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 autoComplete="off"
+                name={`price-${card.id}-${Date.now()}`}
+                data-form-type="other"
               />
               <span className="text-sm text-gray-500 dark:text-gray-400">円</span>
             </div>

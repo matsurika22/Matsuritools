@@ -507,6 +507,9 @@ export default function CardsPage({ params }: PageProps) {
                 placeholder="例: 5500"
                 inputMode="numeric"
                 pattern="[0-9]*"
+                autoComplete="off"
+                name={`box-price-${Date.now()}`}
+                data-form-type="other"
               />
               <Button
                 type="button"
@@ -735,12 +738,14 @@ export default function CardsPage({ params }: PageProps) {
                                         type="number"
                                         value={prices.get(card.id) || ''}
                                         onChange={(e) => handlePriceChange(card.id, e.target.value)}
-                                        className="w-28"
+                                        className="w-32"
                                         placeholder="0"
                                         min="0"
                                         inputMode="numeric"
                                         pattern="[0-9]*"
                                         autoComplete="off"
+                                        name={`price-${card.id}-${Date.now()}`}
+                                        data-form-type="other"
                                       />
                                     </td>
                                   </tr>
@@ -811,12 +816,14 @@ export default function CardsPage({ params }: PageProps) {
                                 type="number"
                                 value={prices.get(card.id) || ''}
                                 onChange={(e) => handlePriceChange(card.id, e.target.value)}
-                                className="w-28"
+                                className="w-32"
                                 placeholder="0"
                                 min="0"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
                                 autoComplete="off"
+                                name={`price-${card.id}-${Date.now()}`}
+                                data-form-type="other"
                               />
                             </td>
                           </tr>
