@@ -44,7 +44,17 @@ export async function POST(request: NextRequest) {
     }
     
     // Google Sheetsサービスを初期化
-    const sheetsService = new GoogleSheetsService()
+    // 環境変数からスプレッドシートIDを取得
+    const spreadsheetId = process.env.GOOGLE_SHEETS_ID
+    if (!spreadsheetId) {
+      console.error('❌ GOOGLE_SHEETS_ID環境変数が設定されていません')
+      return NextResponse.json({ 
+        error: 'Google Sheets configuration error',
+        details: 'GOOGLE_SHEETS_ID is not set' 
+      }, { status: 500 })
+    }
+    
+    const sheetsService = new GoogleSheetsService(spreadsheetId)
     
     // すべてのパックを取得
     const { data: packs } = await supabaseAdmin
