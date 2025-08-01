@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CreditCard, Plus, Edit, Trash2, Search, Filter, Package } from 'lucide-react'
+import { CreditCard, Plus, Edit, Trash2, Search, Filter, Package, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
@@ -36,6 +36,7 @@ export default function CardsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingCard, setEditingCard] = useState<AdminCard | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
   // フォーム用の状態
   const [formData, setFormData] = useState({
@@ -77,6 +78,39 @@ export default function CardsPage() {
       alert('データの取得に失敗しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSync = async () => {
+    if (syncing) return
+    
+    try {
+      setSyncing(true)
+      
+      // Google Sheetsからデータを同期
+      const response = await fetch('/api/sync-sheets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'sync' })
+      })
+      
+      if (!response.ok) {
+        throw new Error('同期に失敗しました')
+      }
+      
+      const result = await response.json()
+      
+      // データを再読み込み
+      await loadData()
+      
+      alert(`スプレッドシートから${result.syncedCards || 0}件のカードを更新しました`)
+    } catch (error) {
+      console.error('Error syncing data:', error)
+      alert('データの同期に失敗しました')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -172,13 +206,24 @@ export default function CardsPage() {
             カード情報と出現率の管理
           </p>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          新しいカードを追加
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSync}
+            disabled={syncing}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? '更新中...' : 'スプレッドシートから更新'}
+          </Button>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            新しいカードを追加
+          </Button>
+        </div>
       </div>
 
       {/* フィルターと検索 */}
