@@ -207,7 +207,7 @@ export async function getAllRarities() {
   const { data, error } = await supabase
     .from('rarities')
     .select('*')
-    .order('sort_order')
+    .order('display_order')
   
   if (error) {
     console.error('Error fetching rarities:', error)
