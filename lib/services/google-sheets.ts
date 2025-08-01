@@ -34,8 +34,14 @@ export class GoogleSheetsService {
   private auth: GoogleAuth
   private spreadsheetId: string
 
-  constructor(spreadsheetId: string) {
-    this.spreadsheetId = spreadsheetId
+  constructor(spreadsheetId?: string) {
+    this.spreadsheetId = spreadsheetId || process.env.GOOGLE_SHEETS_ID || ''
+    
+    if (!this.spreadsheetId) {
+      console.error('❌ GoogleSheetsService: spreadsheetIdが設定されていません')
+      console.error('  引数:', spreadsheetId)
+      console.error('  環境変数 GOOGLE_SHEETS_ID:', process.env.GOOGLE_SHEETS_ID)
+    }
     
     // サービスアカウント認証の設定
     this.auth = new GoogleAuth({
@@ -53,7 +59,13 @@ export class GoogleSheetsService {
    * スプレッドシートからデータを取得
    */
   private async fetchSheetData(range: string): Promise<string[][]> {
+    if (!this.spreadsheetId) {
+      console.error('❌ fetchSheetData: spreadsheetIdが設定されていません')
+      throw new Error('Missing required parameters: spreadsheetId')
+    }
+    
     try {
+      console.log(`📄 Fetching sheet data: ${range} from ${this.spreadsheetId}`)
       const authClient = await this.auth.getClient()
       const sheets = googleapis.sheets({ version: 'v4', auth: authClient as any })
 
@@ -110,7 +122,10 @@ export class GoogleSheetsService {
    * シート形式: A列=カード名, B列=型番, C列=弾ID, D列=レアリティ, E列=買取価格, F列=参考販売価格
    */
   async fetchCardData(packId?: string): Promise<CardData[]> {
-    const sheetName = packId ? `${packId}_カード` : 'カードマスター'
+    // すべてのカードデータは「カードマスター」シートに格納されている
+    const sheetName = 'カードマスター'
+    
+    console.log(`📦 fetchCardData: シート名 = ${sheetName}`)
     const data = await this.fetchSheetData(`${sheetName}!A2:F5000`)
     
     return data
