@@ -735,11 +735,12 @@ export default function CardsPage({ params }: PageProps) {
                                         type="number"
                                         value={prices.get(card.id) || ''}
                                         onChange={(e) => handlePriceChange(card.id, e.target.value)}
-                                        className="w-24"
+                                        className="w-28"
                                         placeholder="0"
                                         min="0"
                                         inputMode="numeric"
                                         pattern="[0-9]*"
+                                        autoComplete="off"
                                       />
                                     </td>
                                   </tr>
@@ -810,11 +811,12 @@ export default function CardsPage({ params }: PageProps) {
                                 type="number"
                                 value={prices.get(card.id) || ''}
                                 onChange={(e) => handlePriceChange(card.id, e.target.value)}
-                                className="w-24"
+                                className="w-28"
                                 placeholder="0"
                                 min="0"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
+                                autoComplete="off"
                               />
                             </td>
                           </tr>

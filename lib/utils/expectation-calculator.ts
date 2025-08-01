@@ -49,7 +49,6 @@ export function calculateBoxExpectation(
     cardsByRarity.get(rarityName)!.push(card)
   })
   
-
   let totalExpectedValue = 0
   const breakdown: CalculationResult['breakdown'] = []
 
@@ -98,6 +97,8 @@ export function calculateBoxExpectation(
     cards.length
   )
 
+  console.log(`📊 期待値計算結果: ¥${Math.round(totalExpectedValue)} (BOX価格: ¥${boxPrice})`)
+
   return {
     expectedValue: totalExpectedValue,
     plusProbability,
@@ -125,7 +126,8 @@ function calculateNoDuplicateExpectation(
     return cards.reduce((sum, card) => sum + card.buyback_price, 0)
   }
 
-  // 各カードが選ばれる確率は等しい
+  // 重要な修正: cards配列の要素数ではなく、totalTypesを分母として使用
+  // しかし、cards配列に含まれるカードのみを計算対象とする
   const selectionProbability = actualCards / totalTypes
   
   // 期待値 = Σ(カード価格 × 選ばれる確率)

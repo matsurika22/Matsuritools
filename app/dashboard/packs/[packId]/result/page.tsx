@@ -111,11 +111,8 @@ export default function ResultPage({ params }: PageProps) {
         // 計算対象のカードをフィルタリング
         // 1. 表示レアリティに含まれるカード
         // 2. カスタムカードに含まれるカード
-        // 3. 価格が設定されているカード
+        // 注意: 価格が0のカードも含める（正しい確率計算のため）
         const cardsForCalculation = cardList.filter(card => {
-          const price = finalPrices.get(card.id) || 0
-          if (price <= 0) return false
-          
           // 表示レアリティが設定されている場合
           if (displayRarityIds.length > 0) {
             // 表示レアリティに含まれるか、カスタムカードに含まれるか
