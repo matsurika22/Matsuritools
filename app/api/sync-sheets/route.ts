@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { GoogleSheetsService } from '@/lib/services/google-sheets'
+
+// サービスロールキーを使用
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Authorizationヘッダーからトークンを取得
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'No authorization token' }, { status: 401 })
+    }
     
-    // 管理者権限チェック
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token = authHeader.replace('Bearer ', '')
+    
+    // トークンを検証してユーザー情報を取得
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError)
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
     
     // 管理者ロールチェック
-    const { data: profile } = await supabase
+    const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
@@ -35,7 +47,7 @@ export async function POST(request: NextRequest) {
     const sheetsService = new GoogleSheetsService()
     
     // すべてのパックを取得
-    const { data: packs } = await supabase
+    const { data: packs } = await supabaseAdmin
       .from('packs')
       .select('*')
       .order('created_at', { ascending: false })
