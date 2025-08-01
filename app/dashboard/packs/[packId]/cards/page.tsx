@@ -698,16 +698,16 @@ export default function CardsPage({ params }: PageProps) {
                           </h3>
                           
                           <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
                               <thead className="bg-gray-50 dark:bg-gray-900">
                                 <tr>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                                     番号
                                   </th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     カード名
                                   </th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-44">
                                     買取価格（円）
                                   </th>
                                 </tr>
@@ -761,10 +761,10 @@ export default function CardsPage({ params }: PageProps) {
                     </h2>
                   
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
                       <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                             番号
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -775,7 +775,7 @@ export default function CardsPage({ params }: PageProps) {
                               レアリティ
                             </th>
                           )}
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-44">
                             買取価格（円）
                           </th>
                         </tr>
@@ -833,7 +833,7 @@ export default function CardsPage({ params }: PageProps) {
                 </h2>
                 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
                     <thead className="bg-gray-50 dark:bg-gray-900">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -891,7 +891,7 @@ export default function CardsPage({ params }: PageProps) {
             {Array.from(selectedCards).length > 0 && (
               <div className="mb-8">
                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">追加したカード</h4>
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
                   <thead className="bg-gray-50 dark:bg-gray-900">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
