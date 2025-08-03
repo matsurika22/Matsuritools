@@ -107,12 +107,33 @@ export class GoogleSheetsService {
   async fetchRarityData(): Promise<Array<{name: string, display_name: string, color: string, display_order: number}>> {
     const data = await this.fetchSheetData('レアリティマスター!A2:D100')
     
+    // レアリティごとのデフォルトカラー
+    const defaultColors: Record<string, string> = {
+      'DM': '#FF1493',      // Deep Pink
+      'OR': '#FFD700',      // Gold
+      'SR': '#FFA500',      // Orange
+      'VR': '#9370DB',      // Medium Purple
+      'R': '#DC143C',       // Crimson
+      'UC': '#4169E1',      // Royal Blue
+      'C': '#808080',       // Gray
+      'DM㊙': '#FF69B4',    // Hot Pink
+      '㊙': '#FF6347',      // Tomato
+      'TD': '#8B4513',      // Saddle Brown
+      'SP': '#FFD700',      // Gold
+      'TR': '#C0C0C0',      // Silver
+      'T': '#2F4F4F',       // Dark Slate Gray
+      'SPR': '#FF69B4',     // Hot Pink
+      'MC': '#708090',      // Slate Gray
+      'SPR㊙': '#FFD700',   // Gold
+      'PR': '#FF6347'       // Tomato
+    }
+    
     return data
       .filter(row => row[0]) // レアリティ名_a（略称）が必須
       .map(row => ({
         name: row[0], // 略称（例: OR）
         display_name: row[1] || row[0], // 表示名（例: オーバーレア）
-        color: row[2] || '#6B7280',
+        color: row[2] || defaultColors[row[0]] || '#6B7280', // スプレッドシートの色 > デフォルトカラー > グレー
         display_order: parseInt(row[3] || '1')
       }))
   }
@@ -343,6 +364,13 @@ export class SheetsSyncService {
       const rarities = await this.sheetsService.fetchRarityData()
       
       for (const rarity of rarities) {
+        // まず既存のレコードを確認
+        const { data: existingRarity } = await this.supabase
+          .from('rarities')
+          .select('id')
+          .eq('name', rarity.name)
+          .single()
+        
         const rarityData = {
           name: rarity.name,
           display_name: rarity.display_name,
@@ -350,9 +378,21 @@ export class SheetsSyncService {
           display_order: rarity.display_order
         }
         
-        const { error } = await this.supabase
-          .from('rarities')
-          .upsert(rarityData, { onConflict: 'name' })
+        let error
+        if (existingRarity) {
+          // 既存レコードがある場合は更新
+          const { error: updateError } = await this.supabase
+            .from('rarities')
+            .update(rarityData)
+            .eq('id', existingRarity.id)
+          error = updateError
+        } else {
+          // 新規レコードの場合は挿入
+          const { error: insertError } = await this.supabase
+            .from('rarities')
+            .insert(rarityData)
+          error = insertError
+        }
         
         if (error) {
           errors.push(`レアリティ ${rarity.name}: ${error.message}`)
