@@ -74,7 +74,7 @@ export default function PackRaritiesPage({ params }: PageProps) {
 
       if (error) throw error
       
-      // データを整形
+      // データを整形（カードが存在するレアリティのみ）
       const formattedData = data?.map(item => ({
         id: item.id,
         pack_id: item.pack_id,
@@ -90,7 +90,9 @@ export default function PackRaritiesPage({ params }: PageProps) {
         },
         total_types: item.total_types || 0,
         rate_per_card: item.rate_per_card || 0
-      })) || []
+      }))
+      .filter(item => item.total_types > 0) // カードが存在するレアリティのみ表示
+       || []
       
       setPackRarities(formattedData)
       
