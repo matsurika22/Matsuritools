@@ -1,21 +1,4 @@
--- pack_raritiesテーブルに再録用の封入率カラムを追加
-
--- 再録カード用の封入率カラムを追加
-ALTER TABLE pack_rarities 
-ADD COLUMN IF NOT EXISTS cards_per_box_reprint NUMERIC DEFAULT 0;
-
--- 再録カード用の入力フィールドを追加  
-ALTER TABLE pack_rarities 
-ADD COLUMN IF NOT EXISTS box_input_x_reprint TEXT;
-
-ALTER TABLE pack_rarities 
-ADD COLUMN IF NOT EXISTS box_input_y_reprint TEXT;
-
--- 再録用の特記事項カラムを追加
-ALTER TABLE pack_rarities 
-ADD COLUMN IF NOT EXISTS notes_reprint TEXT;
-
--- pack_rarity_detailsビューを再作成（再録カラムを含む）
+-- pack_rarity_detailsビューを修正（再録フラグの処理を修正）
 DROP VIEW IF EXISTS pack_rarity_details;
 
 CREATE VIEW pack_rarity_details AS
@@ -44,7 +27,7 @@ SELECT
   END as rate_per_card_new,
   CASE 
     WHEN COUNT(DISTINCT CASE WHEN COALESCE((c.parameters->>'reprint_flag')::boolean, false) = true THEN c.id END) > 0 
-    THEN pr.cards_per_box_reprint / COUNT(DISTINCT CASE WHEN COALESCE((c.parameters->>'reprint_flag')::boolean, false) = true THEN c.id END)::numeric
+    THEN COALESCE(pr.cards_per_box_reprint, 0) / COUNT(DISTINCT CASE WHEN COALESCE((c.parameters->>'reprint_flag')::boolean, false) = true THEN c.id END)::numeric
     ELSE 0
   END as rate_per_card_reprint,
   CASE 
