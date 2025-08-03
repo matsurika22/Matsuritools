@@ -79,7 +79,7 @@ export default function CustomCardsPage({ params }: PageProps) {
       
       setRarities(raritiesData || [])
       
-      // 現在のパックのカードのみを取得
+      // 現在のパックのカードのみを取得（parametersフィールドも含む）
       const { data: cardsData, error: cardsError } = await supabase
         .from('cards')
         .select(`
@@ -87,6 +87,7 @@ export default function CustomCardsPage({ params }: PageProps) {
           card_number,
           name,
           rarity_id,
+          parameters,
           rarities (
             id,
             name,
@@ -103,6 +104,7 @@ export default function CustomCardsPage({ params }: PageProps) {
         id: card.id,
         cardNumber: card.card_number,
         name: card.name,
+        parameters: card.parameters as any,
         rarity: card.rarities && !Array.isArray(card.rarities) ? {
           id: String((card.rarities as any).id || ''),
           name: (card.rarities as any).name || '',
@@ -344,6 +346,9 @@ export default function CustomCardsPage({ params }: PageProps) {
                   レアリティ
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  買取価格
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   操作
                 </th>
               </tr>
@@ -364,6 +369,9 @@ export default function CustomCardsPage({ params }: PageProps) {
                     >
                       {card.rarity?.name}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    {card.parameters?.buyback_price ? `¥${card.parameters.buyback_price.toLocaleString()}` : '¥0'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <Button
