@@ -8,14 +8,18 @@ export interface CardWithPrice {
     color: string
   }
   buyback_price: number
-  box_rate?: number  // 旧システム用（後方互換性）
+  reprint_flag?: boolean  // 再録フラグ
+  box_rate?: number      // 旧システム用（後方互換性）
 }
 
 export interface PackRarityInfo {
   rarity_name: string
-  total_types: number      // 全種類数
-  cards_per_box: number    // BOX排出枚数
-  allows_duplicates: boolean // 重複を許可するか
+  total_types: number          // 全種類数
+  total_types_new?: number     // 新規種類数
+  total_types_reprint?: number // 再録種類数
+  cards_per_box: number        // BOX排出枚数（新規枠）
+  cards_per_box_reprint?: number // BOX排出枚数（再録枠）
+  allows_duplicates: boolean   // 重複を許可するか
 }
 
 export interface CalculationResult {
@@ -38,15 +42,37 @@ export function calculateBoxExpectation(
   boxPrice: number
 ): CalculationResult {
   
-  // レアリティごとにカードをグループ化
+  // レアリティごと、かつ再録・新規ごとにカードをグループ化
   const cardsByRarity = new Map<string, CardWithPrice[]>()
+  const cardsByRarityNew = new Map<string, CardWithPrice[]>()
+  const cardsByRarityReprint = new Map<string, CardWithPrice[]>()
+  
   cards.forEach(card => {
     // rarityがオブジェクトの場合とそうでない場合の両方に対応
     const rarityName = typeof card.rarity === 'object' ? card.rarity.name : (card.rarity || 'Unknown')
+    
+    // 全体用
     if (!cardsByRarity.has(rarityName)) {
       cardsByRarity.set(rarityName, [])
     }
     cardsByRarity.get(rarityName)!.push(card)
+    
+    // 再録・新規別用（VRとSRのみ）
+    if (rarityName === 'VR' || rarityName === 'SR') {
+      if (card.reprint_flag) {
+        // 再録枠
+        if (!cardsByRarityReprint.has(rarityName)) {
+          cardsByRarityReprint.set(rarityName, [])
+        }
+        cardsByRarityReprint.get(rarityName)!.push(card)
+      } else {
+        // 新規枠
+        if (!cardsByRarityNew.has(rarityName)) {
+          cardsByRarityNew.set(rarityName, [])
+        }
+        cardsByRarityNew.get(rarityName)!.push(card)
+      }
+    }
   })
   
   let totalExpectedValue = 0
@@ -54,24 +80,65 @@ export function calculateBoxExpectation(
 
   // 各レアリティの期待値を計算
   packRarities.forEach(rarityInfo => {
-    const cards = cardsByRarity.get(rarityInfo.rarity_name) || []
-    if (cards.length === 0) return
-
+    const rarityName = rarityInfo.rarity_name
     let rarityExpectedValue = 0
 
-    if (rarityInfo.allows_duplicates) {
-      // C,UCなど重複ありの場合：単純な期待値計算
-      cards.forEach(card => {
-        const cardRate = rarityInfo.cards_per_box / rarityInfo.total_types
-        rarityExpectedValue += card.buyback_price * cardRate
-      })
+    // VRとSRは新規・再録を分けて計算
+    if ((rarityName === 'VR' || rarityName === 'SR') && 
+        (rarityInfo.total_types_new || rarityInfo.total_types_reprint)) {
+      
+      // 新規枠の計算
+      const newCards = cardsByRarityNew.get(rarityName) || []
+      if (newCards.length > 0 && rarityInfo.cards_per_box > 0) {
+        if (rarityInfo.allows_duplicates) {
+          newCards.forEach(card => {
+            const cardRate = rarityInfo.cards_per_box / (rarityInfo.total_types_new || 1)
+            rarityExpectedValue += card.buyback_price * cardRate
+          })
+        } else {
+          rarityExpectedValue += calculateNoDuplicateExpectation(
+            newCards,
+            rarityInfo.cards_per_box,
+            rarityInfo.total_types_new || 1
+          )
+        }
+      }
+
+      // 再録枠の計算
+      const reprintCards = cardsByRarityReprint.get(rarityName) || []
+      if (reprintCards.length > 0 && (rarityInfo.cards_per_box_reprint || 0) > 0) {
+        if (rarityInfo.allows_duplicates) {
+          reprintCards.forEach(card => {
+            const cardRate = (rarityInfo.cards_per_box_reprint || 0) / (rarityInfo.total_types_reprint || 1)
+            rarityExpectedValue += card.buyback_price * cardRate
+          })
+        } else {
+          rarityExpectedValue += calculateNoDuplicateExpectation(
+            reprintCards,
+            rarityInfo.cards_per_box_reprint || 0,
+            rarityInfo.total_types_reprint || 1
+          )
+        }
+      }
     } else {
-      // 重複なしの場合：組み合わせを考慮した期待値計算
-      rarityExpectedValue = calculateNoDuplicateExpectation(
-        cards,
-        rarityInfo.cards_per_box,
-        rarityInfo.total_types
-      )
+      // VR/SR以外、または旧データの場合：従来通りの計算
+      const cards = cardsByRarity.get(rarityName) || []
+      if (cards.length === 0) return
+
+      if (rarityInfo.allows_duplicates) {
+        // C,UCなど重複ありの場合：単純な期待値計算
+        cards.forEach(card => {
+          const cardRate = rarityInfo.cards_per_box / rarityInfo.total_types
+          rarityExpectedValue += card.buyback_price * cardRate
+        })
+      } else {
+        // 重複なしの場合：組み合わせを考慮した期待値計算
+        rarityExpectedValue = calculateNoDuplicateExpectation(
+          cards,
+          rarityInfo.cards_per_box,
+          rarityInfo.total_types
+        )
+      }
     }
 
     totalExpectedValue += rarityExpectedValue

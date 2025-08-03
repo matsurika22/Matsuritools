@@ -18,16 +18,24 @@ interface PackRarity {
   pack_id: string
   rarity_id: number
   cards_per_box: number
+  cards_per_box_reprint?: number
   notes?: string
+  notes_reprint?: string
   box_input_x?: string
   box_input_y?: string
+  box_input_x_reprint?: string
+  box_input_y_reprint?: string
   rarity?: { 
     name: string
     color: string
     display_order: number
   }
   total_types?: number
+  total_types_new?: number
+  total_types_reprint?: number
   rate_per_card?: number
+  rate_per_card_new?: number
+  rate_per_card_reprint?: number
 }
 
 interface Pack {
@@ -46,8 +54,18 @@ export default function PackRaritiesPage({ params }: PageProps) {
   const [packRarities, setPackRarities] = useState<PackRarity[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [editedValues, setEditedValues] = useState<Record<number, { cards_per_box: string; notes: string }>>({})
-  const [boxInputs, setBoxInputs] = useState<Record<number, { boxes: string; cards: string }>>({})
+  const [editedValues, setEditedValues] = useState<Record<number, { 
+    cards_per_box: string; 
+    cards_per_box_reprint: string; 
+    notes: string; 
+    notes_reprint: string; 
+  }>>({})
+  const [boxInputs, setBoxInputs] = useState<Record<number, { 
+    boxes: string; 
+    cards: string; 
+    boxes_reprint: string; 
+    cards_reprint: string; 
+  }>>({})
   const [availablePacks, setAvailablePacks] = useState<AvailablePack[]>([])
   const [showCopyModal, setShowCopyModal] = useState(false)
 
@@ -80,16 +98,24 @@ export default function PackRaritiesPage({ params }: PageProps) {
         pack_id: item.pack_id,
         rarity_id: item.rarity_id,
         cards_per_box: item.cards_per_box || 0,
+        cards_per_box_reprint: item.cards_per_box_reprint || 0,
         notes: item.notes,
+        notes_reprint: item.notes_reprint,
         box_input_x: item.box_input_x,
         box_input_y: item.box_input_y,
+        box_input_x_reprint: item.box_input_x_reprint,
+        box_input_y_reprint: item.box_input_y_reprint,
         rarity: { 
           name: item.rarity_name, 
           color: item.rarity_color,
           display_order: item.display_order
         },
         total_types: item.total_types || 0,
-        rate_per_card: item.rate_per_card || 0
+        total_types_new: item.total_types_new || 0,
+        total_types_reprint: item.total_types_reprint || 0,
+        rate_per_card: item.rate_per_card || 0,
+        rate_per_card_new: item.rate_per_card_new || 0,
+        rate_per_card_reprint: item.rate_per_card_reprint || 0
       }))
       .filter(item => item.total_types > 0) // カードが存在するレアリティのみ表示
        || []
@@ -97,26 +123,46 @@ export default function PackRaritiesPage({ params }: PageProps) {
       setPackRarities(formattedData)
       
       // 既存のcards_per_boxからboxInputsを初期化
-      const initialBoxInputs: Record<number, { boxes: string; cards: string }> = {}
+      const initialBoxInputs: Record<number, { 
+        boxes: string; 
+        cards: string; 
+        boxes_reprint: string; 
+        cards_reprint: string; 
+      }> = {}
       
       formattedData.forEach(pr => {
-        // box_input_x, box_input_yが保存されていればそれを使用
+        const boxInput = {
+          boxes: '1',
+          cards: '0',
+          boxes_reprint: '1',
+          cards_reprint: '0'
+        }
+        
+        // 新規枠の設定
         if (pr.box_input_x && pr.box_input_y) {
-          // 整数に変換して保存
-          initialBoxInputs[pr.id] = {
-            boxes: Math.floor(parseFloat(pr.box_input_x) || 1).toString(),
-            cards: Math.floor(parseFloat(pr.box_input_y) || 0).toString()
-          }
+          boxInput.boxes = Math.floor(parseFloat(pr.box_input_x) || 1).toString()
+          boxInput.cards = Math.floor(parseFloat(pr.box_input_y) || 0).toString()
         } else {
-          // 保存されていない場合は初期値を設定
           const cardsPerBox = pr.cards_per_box || 0
           if (cardsPerBox > 0) {
-            initialBoxInputs[pr.id] = {
-              boxes: '1',
-              cards: Math.floor(cardsPerBox).toString()
-            }
+            boxInput.boxes = '1'
+            boxInput.cards = Math.floor(cardsPerBox).toString()
           }
         }
+        
+        // 再録枠の設定
+        if (pr.box_input_x_reprint && pr.box_input_y_reprint) {
+          boxInput.boxes_reprint = Math.floor(parseFloat(pr.box_input_x_reprint) || 1).toString()
+          boxInput.cards_reprint = Math.floor(parseFloat(pr.box_input_y_reprint) || 0).toString()
+        } else {
+          const cardsPerBoxReprint = pr.cards_per_box_reprint || 0
+          if (cardsPerBoxReprint > 0) {
+            boxInput.boxes_reprint = '1'
+            boxInput.cards_reprint = Math.floor(cardsPerBoxReprint).toString()
+          }
+        }
+        
+        initialBoxInputs[pr.id] = boxInput
       })
       
       setBoxInputs(initialBoxInputs)
@@ -149,7 +195,7 @@ export default function PackRaritiesPage({ params }: PageProps) {
     }
   }
 
-  const handleInputChange = (id: number, field: 'cards_per_box' | 'notes', value: string) => {
+  const handleInputChange = (id: number, field: 'cards_per_box' | 'cards_per_box_reprint' | 'notes' | 'notes_reprint', value: string) => {
     setEditedValues(prev => ({
       ...prev,
       [id]: {
@@ -159,7 +205,7 @@ export default function PackRaritiesPage({ params }: PageProps) {
     }))
   }
 
-  const handleBoxInputChange = (id: number, field: 'boxes' | 'cards', value: string) => {
+  const handleBoxInputChange = (id: number, field: 'boxes' | 'cards' | 'boxes_reprint' | 'cards_reprint', value: string) => {
     // 整数のみ許可（小数点を含む値は整数に変換）
     const intValue = value === '' ? '' : Math.floor(parseFloat(value) || 0).toString()
     
@@ -174,12 +220,28 @@ export default function PackRaritiesPage({ params }: PageProps) {
     
     // xBOXにy枚から1BOXあたりの枚数を計算
     const input = newBoxInputs[id]
-    if (input && input.boxes && input.cards) {
-      const boxes = parseInt(input.boxes)
-      const cards = parseInt(input.cards)
-      if (boxes > 0 && !isNaN(cards)) {
-        const cardsPerBox = cards / boxes
-        handleInputChange(id, 'cards_per_box', cardsPerBox.toString())
+    
+    // 新規枠の計算
+    if (field === 'boxes' || field === 'cards') {
+      if (input && input.boxes && input.cards) {
+        const boxes = parseInt(input.boxes)
+        const cards = parseInt(input.cards)
+        if (boxes > 0 && !isNaN(cards)) {
+          const cardsPerBox = cards / boxes
+          handleInputChange(id, 'cards_per_box', cardsPerBox.toString())
+        }
+      }
+    }
+    
+    // 再録枠の計算
+    if (field === 'boxes_reprint' || field === 'cards_reprint') {
+      if (input && input.boxes_reprint && input.cards_reprint) {
+        const boxes = parseInt(input.boxes_reprint)
+        const cards = parseInt(input.cards_reprint)
+        if (boxes > 0 && !isNaN(cards)) {
+          const cardsPerBox = cards / boxes
+          handleInputChange(id, 'cards_per_box_reprint', cardsPerBox.toString())
+        }
       }
     }
   }
@@ -196,8 +258,16 @@ export default function PackRaritiesPage({ params }: PageProps) {
         updates.cards_per_box = parseFloat(edited.cards_per_box)
       }
       
+      if (edited.cards_per_box_reprint !== undefined) {
+        updates.cards_per_box_reprint = parseFloat(edited.cards_per_box_reprint)
+      }
+      
       if (edited.notes !== undefined) {
         updates.notes = edited.notes
+      }
+      
+      if (edited.notes_reprint !== undefined) {
+        updates.notes_reprint = edited.notes_reprint
       }
 
       // boxInputsの値も一緒に保存
@@ -205,6 +275,8 @@ export default function PackRaritiesPage({ params }: PageProps) {
       if (boxInput) {
         updates.box_input_x = boxInput.boxes
         updates.box_input_y = boxInput.cards
+        updates.box_input_x_reprint = boxInput.boxes_reprint
+        updates.box_input_y_reprint = boxInput.cards_reprint
       }
 
       const { data, error } = await supabase
@@ -259,8 +331,16 @@ export default function PackRaritiesPage({ params }: PageProps) {
           updates.cards_per_box = parseFloat(edited.cards_per_box)
         }
         
+        if (edited.cards_per_box_reprint !== undefined) {
+          updates.cards_per_box_reprint = parseFloat(edited.cards_per_box_reprint)
+        }
+        
         if (edited.notes !== undefined) {
           updates.notes = edited.notes
+        }
+        
+        if (edited.notes_reprint !== undefined) {
+          updates.notes_reprint = edited.notes_reprint
         }
 
         // boxInputsの値も一緒に保存
@@ -268,6 +348,8 @@ export default function PackRaritiesPage({ params }: PageProps) {
         if (boxInput) {
           updates.box_input_x = boxInput.boxes
           updates.box_input_y = boxInput.cards
+          updates.box_input_x_reprint = boxInput.boxes_reprint
+          updates.box_input_y_reprint = boxInput.cards_reprint
         }
 
         const { error } = await supabase
@@ -299,12 +381,29 @@ export default function PackRaritiesPage({ params }: PageProps) {
     }
   }
 
-  const getValue = (packRarity: PackRarity, field: 'cards_per_box' | 'notes') => {
+  const getValue = (packRarity: PackRarity, field: 'cards_per_box' | 'cards_per_box_reprint' | 'notes' | 'notes_reprint') => {
     const edited = editedValues[packRarity.id]
     if (edited && edited[field] !== undefined) {
       return edited[field]
     }
-    return field === 'cards_per_box' ? packRarity.cards_per_box.toString() : (packRarity.notes || '')
+    
+    switch (field) {
+      case 'cards_per_box':
+        return packRarity.cards_per_box.toString()
+      case 'cards_per_box_reprint':
+        return (packRarity.cards_per_box_reprint || 0).toString()
+      case 'notes':
+        return packRarity.notes || ''
+      case 'notes_reprint':
+        return packRarity.notes_reprint || ''
+      default:
+        return ''
+    }
+  }
+
+  // VRとSRのレアリティかどうかを判定
+  const isReprintSeparated = (rarity: string) => {
+    return rarity === 'VR' || rarity === 'SR'
   }
 
   const hasChanges = (packRarity: PackRarity) => {
@@ -313,7 +412,9 @@ export default function PackRaritiesPage({ params }: PageProps) {
     
     return (
       (edited.cards_per_box !== undefined && parseFloat(edited.cards_per_box) !== packRarity.cards_per_box) ||
-      (edited.notes !== undefined && edited.notes !== (packRarity.notes || ''))
+      (edited.cards_per_box_reprint !== undefined && parseFloat(edited.cards_per_box_reprint) !== (packRarity.cards_per_box_reprint || 0)) ||
+      (edited.notes !== undefined && edited.notes !== (packRarity.notes || '')) ||
+      (edited.notes_reprint !== undefined && edited.notes_reprint !== (packRarity.notes_reprint || ''))
     )
   }
 
@@ -558,12 +659,16 @@ export default function PackRaritiesPage({ params }: PageProps) {
                   レアリティ
                 </th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <span className="hidden sm:inline">全種類数</span>
+                  <span className="hidden sm:inline">種類数</span>
                   <span className="sm:hidden">種類</span>
                 </th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <span className="hidden sm:inline">封入率（xBOXにy枚）</span>
-                  <span className="sm:hidden">封入率</span>
+                  <span className="hidden sm:inline">新規枠封入率</span>
+                  <span className="sm:hidden">新規枠</span>
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <span className="hidden sm:inline">再録枠封入率</span>
+                  <span className="sm:hidden">再録枠</span>
                 </th>
                 <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   1種あたり
@@ -588,61 +693,185 @@ export default function PackRaritiesPage({ params }: PageProps) {
                     </span>
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    <span className="hidden sm:inline">{pr.total_types}種類</span>
-                    <span className="sm:hidden">{pr.total_types}</span>
+                    {isReprintSeparated(pr.rarity?.name || '') ? (
+                      <div className="space-y-1">
+                        <div><span className="hidden sm:inline">新規: {pr.total_types_new}種類</span><span className="sm:hidden">新:{pr.total_types_new}</span></div>
+                        <div><span className="hidden sm:inline">再録: {pr.total_types_reprint}種類</span><span className="sm:hidden">再:{pr.total_types_reprint}</span></div>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="hidden sm:inline">{pr.total_types}種類</span>
+                        <span className="sm:hidden">{pr.total_types}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 sm:px-6 py-4">
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <div className="flex items-center space-x-1">
-                          <Input
-                            type="number"
-                            value={boxInputs[pr.id]?.boxes || ''}
-                            onChange={(e) => handleBoxInputChange(pr.id, 'boxes', e.target.value)}
-                            placeholder="x"
-                            className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            step="1"
-                            min="1"
-                            style={{ textAlign: 'center' }}
-                          />
-                          <span className="text-xs text-gray-500 whitespace-nowrap">BOXに</span>
-                          <Input
-                            type="number"
-                            value={boxInputs[pr.id]?.cards || ''}
-                            onChange={(e) => handleBoxInputChange(pr.id, 'cards', e.target.value)}
-                            placeholder="y"
-                            className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            step="1"
-                            min="0"
-                            style={{ textAlign: 'center' }}
-                          />
-                          <span className="text-xs text-gray-500">枚</span>
+                    {isReprintSeparated(pr.rarity?.name || '') ? (
+                      // VR/SR: 新規枠と再録枠の両方を表示
+                      <div className="flex flex-col space-y-3">
+                        {/* 新規枠 */}
+                        <div className="flex flex-col space-y-2">
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300">新規枠</div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div className="flex items-center space-x-1">
+                              <Input
+                                type="number"
+                                value={boxInputs[pr.id]?.boxes || ''}
+                                onChange={(e) => handleBoxInputChange(pr.id, 'boxes', e.target.value)}
+                                placeholder="x"
+                                className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                step="1"
+                                min="1"
+                                style={{ textAlign: 'center' }}
+                              />
+                              <span className="text-xs text-gray-500 whitespace-nowrap">BOXに</span>
+                              <Input
+                                type="number"
+                                value={boxInputs[pr.id]?.cards || ''}
+                                onChange={(e) => handleBoxInputChange(pr.id, 'cards', e.target.value)}
+                                placeholder="y"
+                                className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                step="1"
+                                min="0"
+                                style={{ textAlign: 'center' }}
+                              />
+                              <span className="text-xs text-gray-500">枚</span>
+                            </div>
+                            {/* スマホ用：現在の値を表示 */}
+                            <div className="sm:hidden text-xs text-gray-600 dark:text-gray-400">
+                              = {getValue(pr, 'cards_per_box')}枚/BOX
+                            </div>
+                          </div>
                         </div>
-                        {/* スマホ用：現在の値を表示 */}
-                        <div className="sm:hidden text-xs text-gray-600 dark:text-gray-400">
-                          = {getValue(pr, 'cards_per_box')}枚/BOX
+                        
+                        {/* 再録枠 */}
+                        <div className="flex flex-col space-y-2">
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300">再録枠</div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div className="flex items-center space-x-1">
+                              <Input
+                                type="number"
+                                value={boxInputs[pr.id]?.boxes_reprint || ''}
+                                onChange={(e) => handleBoxInputChange(pr.id, 'boxes_reprint', e.target.value)}
+                                placeholder="x"
+                                className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                step="1"
+                                min="1"
+                                style={{ textAlign: 'center' }}
+                              />
+                              <span className="text-xs text-gray-500 whitespace-nowrap">BOXに</span>
+                              <Input
+                                type="number"
+                                value={boxInputs[pr.id]?.cards_reprint || ''}
+                                onChange={(e) => handleBoxInputChange(pr.id, 'cards_reprint', e.target.value)}
+                                placeholder="y"
+                                className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                step="1"
+                                min="0"
+                                style={{ textAlign: 'center' }}
+                              />
+                              <span className="text-xs text-gray-500">枚</span>
+                            </div>
+                            {/* スマホ用：現在の値を表示 */}
+                            <div className="sm:hidden text-xs text-gray-600 dark:text-gray-400">
+                              = {getValue(pr, 'cards_per_box_reprint')}枚/BOX
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      // その他のレアリティ: 新規枠のみ表示
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <div className="flex items-center space-x-1">
+                            <Input
+                              type="number"
+                              value={boxInputs[pr.id]?.boxes || ''}
+                              onChange={(e) => handleBoxInputChange(pr.id, 'boxes', e.target.value)}
+                              placeholder="x"
+                              className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              step="1"
+                              min="1"
+                              style={{ textAlign: 'center' }}
+                            />
+                            <span className="text-xs text-gray-500 whitespace-nowrap">BOXに</span>
+                            <Input
+                              type="number"
+                              value={boxInputs[pr.id]?.cards || ''}
+                              onChange={(e) => handleBoxInputChange(pr.id, 'cards', e.target.value)}
+                              placeholder="y"
+                              className="w-16 sm:w-20 text-center text-sm sm:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              step="1"
+                              min="0"
+                              style={{ textAlign: 'center' }}
+                            />
+                            <span className="text-xs text-gray-500">枚</span>
+                          </div>
+                          {/* スマホ用：現在の値を表示 */}
+                          <div className="sm:hidden text-xs text-gray-600 dark:text-gray-400">
+                            = {getValue(pr, 'cards_per_box')}枚/BOX
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <input
                       type="hidden"
                       value={getValue(pr, 'cards_per_box')}
                     />
+                    {isReprintSeparated(pr.rarity?.name || '') && (
+                      <input
+                        type="hidden"
+                        value={getValue(pr, 'cards_per_box_reprint')}
+                      />
+                    )}
                   </td>
                   <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {pr.rate_per_card?.toFixed(4) || '0.0000'}枚
                   </td>
                   <td className="hidden md:table-cell px-6 py-4">
-                    <Input
-                      value={getValue(pr, 'notes')}
-                      onChange={(e) => handleInputChange(pr.id, 'notes', e.target.value)}
-                      placeholder="例：SR以上確定パック"
-                      className="w-full"
-                    />
+                    {isReprintSeparated(pr.rarity?.name || '') ? (
+                      // VR/SR: 新規枠と再録枠の両方のメモ
+                      <div className="flex flex-col space-y-2">
+                        <div>
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">新規枠メモ</div>
+                          <Input
+                            value={getValue(pr, 'notes')}
+                            onChange={(e) => handleInputChange(pr.id, 'notes', e.target.value)}
+                            placeholder="例：SR以上確定パック"
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">再録枠メモ</div>
+                          <Input
+                            value={getValue(pr, 'notes_reprint')}
+                            onChange={(e) => handleInputChange(pr.id, 'notes_reprint', e.target.value)}
+                            placeholder="例：再録確定パック"
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      // その他のレアリティ: 通常のメモのみ
+                      <Input
+                        value={getValue(pr, 'notes')}
+                        onChange={(e) => handleInputChange(pr.id, 'notes', e.target.value)}
+                        placeholder="例：SR以上確定パック"
+                        className="w-full"
+                      />
+                    )}
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     {hasChanges(pr) && (

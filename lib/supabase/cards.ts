@@ -170,7 +170,8 @@ export async function calculateExpectedValue(
           name: 'Unknown',
           color: '#808080'
         },
-        buyback_price: price
+        buyback_price: price,
+        reprint_flag: card.parameters?.reprint_flag || false
       }
     })
     
@@ -179,7 +180,10 @@ export async function calculateExpectedValue(
     const rarityInfo = packRarities.map(pr => ({
       rarity_name: pr.rarity_name,
       total_types: pr.total_types || 0,
+      total_types_new: pr.total_types_new || 0,
+      total_types_reprint: pr.total_types_reprint || 0,
       cards_per_box: pr.cards_per_box || 0,
+      cards_per_box_reprint: pr.cards_per_box_reprint || 0,
       allows_duplicates: allowsDuplicates(pr.rarity_name)
     }))
     

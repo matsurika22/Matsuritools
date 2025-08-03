@@ -16,6 +16,7 @@ interface CardData {
   buyback_price: number
   reference_price?: number
   pack_id: string
+  reprint_flag?: boolean
 }
 
 interface PackData {
@@ -140,7 +141,7 @@ export class GoogleSheetsService {
 
   /**
    * カードデータを取得
-   * シート形式: A列=カード名, B列=型番, C列=弾ID, D列=レアリティ, E列=買取価格, F列=参考販売価格
+   * シート形式: A列=カード名, B列=型番, C列=弾ID, D列=レアリティ, E列=買取価格, F列=参考販売価格, G列=再録フラグ
    */
   async fetchCardData(packId?: string): Promise<CardData[]> {
     // すべてのカードデータは「カードマスター」シートに格納されている
@@ -150,7 +151,7 @@ export class GoogleSheetsService {
     if (packId) {
       console.log(`🔍 指定されたpackId: ${packId}`)
     }
-    const data = await this.fetchSheetData(`${sheetName}!A2:F5000`)
+    const data = await this.fetchSheetData(`${sheetName}!A2:G5000`)
     
     const allCards = data
       .filter(row => row[0] && row[1] && row[2] && row[3]) // 名前、型番、弾ID、レアリティが必須
@@ -161,7 +162,8 @@ export class GoogleSheetsService {
         pack_id: row[2],
         rarity: row[3],
         buyback_price: parseInt(row[4] || '0'),
-        reference_price: row[5] ? parseInt(row[5]) : undefined
+        reference_price: row[5] ? parseInt(row[5]) : undefined,
+        reprint_flag: row[6] === '1' || row[6]?.toLowerCase() === 'true' || row[6] === 'TRUE'
       }))
     
     if (packId) {
@@ -303,7 +305,8 @@ export class GoogleSheetsService {
         // 一時的にparametersフィールドに価格情報を保存
         parameters: {
           buyback_price: card.buyback_price,
-          reference_price: card.reference_price
+          reference_price: card.reference_price,
+          reprint_flag: card.reprint_flag || false
         },
         updated_at: new Date().toISOString()
       }
@@ -447,7 +450,8 @@ export class SheetsSyncService {
           // 一時的にparametersフィールドに価格情報を保存
           parameters: {
             buyback_price: card.buyback_price,
-            reference_price: card.reference_price
+            reference_price: card.reference_price,
+            reprint_flag: card.reprint_flag || false
           }
         }
 
@@ -506,7 +510,8 @@ export class SheetsSyncService {
         // 一時的にparametersフィールドに価格情報を保存
         parameters: {
           buyback_price: card.buyback_price,
-          reference_price: card.reference_price
+          reference_price: card.reference_price,
+          reprint_flag: card.reprint_flag || false
         }
       }
 
