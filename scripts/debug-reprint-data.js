@@ -23,8 +23,12 @@ async function checkData() {
       const newCards = cards.filter(c => !c.parameters?.reprint_flag);
       const reprintCards = cards.filter(c => c.parameters?.reprint_flag);
       console.log(`  - New: ${newCards.length}, Reprint: ${reprintCards.length}`);
+      
+      // parametersフィールドの詳細を確認
+      console.log(`  - Sample parameters:`, cards[0]?.parameters);
+      
       if (cards.length <= 10) {
-        cards.forEach(c => console.log(`    ${c.card_number}: ${c.name} (reprint: ${c.parameters?.reprint_flag})`));
+        cards.forEach(c => console.log(`    ${c.card_number}: ${c.name} (parameters: ${JSON.stringify(c.parameters)})`));
       }
     }
   });

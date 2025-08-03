@@ -83,40 +83,71 @@ export default function PackRaritiesPage({ params }: PageProps) {
       if (packError) throw packError
       setPack(packData)
       
-      // pack_rarity_detailsビューから取得
-      const { data, error } = await supabase
-        .from('pack_rarity_details')
-        .select('*')
+      // pack_raritiesとcardsデータを別々に取得して計算
+      const { data: packRarityData, error: packRarityError } = await supabase
+        .from('pack_rarities')
+        .select(`
+          id, pack_id, rarity_id, cards_per_box, notes, box_input_x, box_input_y,
+          cards_per_box_reprint, notes_reprint, box_input_x_reprint, box_input_y_reprint,
+          rarities (name, color, display_order)
+        `)
         .eq('pack_id', params.packId)
-        .order('display_order')
+        .order('rarities(display_order)')
 
-      if (error) throw error
-      
+      if (packRarityError) throw packRarityError
+
+      // そのパックのカードデータを取得
+      const { data: cardsData, error: cardsError } = await supabase
+        .from('cards')
+        .select('id, rarity_id, parameters')
+        .eq('pack_id', params.packId)
+
+      if (cardsError) throw cardsError
+
+      // レアリティごとにカード数を計算
+      const cardsByRarity = new Map<number, { total: number, new: number, reprint: number }>()
+      cardsData?.forEach(card => {
+        const rarityId = card.rarity_id
+        if (!cardsByRarity.has(rarityId)) {
+          cardsByRarity.set(rarityId, { total: 0, new: 0, reprint: 0 })
+        }
+        const counts = cardsByRarity.get(rarityId)!
+        counts.total++
+        if (card.parameters?.reprint_flag) {
+          counts.reprint++
+        } else {
+          counts.new++
+        }
+      })
+
       // データを整形（カードが存在するレアリティのみ）
-      const formattedData = data?.map(item => ({
-        id: item.id,
-        pack_id: item.pack_id,
-        rarity_id: item.rarity_id,
-        cards_per_box: item.cards_per_box || 0,
-        cards_per_box_reprint: item.cards_per_box_reprint || 0,
-        notes: item.notes,
-        notes_reprint: item.notes_reprint,
-        box_input_x: item.box_input_x,
-        box_input_y: item.box_input_y,
-        box_input_x_reprint: item.box_input_x_reprint,
-        box_input_y_reprint: item.box_input_y_reprint,
-        rarity: { 
-          name: item.rarity_name, 
-          color: item.rarity_color,
-          display_order: item.display_order
-        },
-        total_types: item.total_types || 0,
-        total_types_new: item.total_types_new || 0,
-        total_types_reprint: item.total_types_reprint || 0,
-        rate_per_card: item.rate_per_card || 0,
-        rate_per_card_new: item.rate_per_card_new || 0,
-        rate_per_card_reprint: item.rate_per_card_reprint || 0
-      }))
+      const formattedData = packRarityData?.map(item => {
+        const counts = cardsByRarity.get(item.rarity_id) || { total: 0, new: 0, reprint: 0 }
+        return {
+          id: item.id,
+          pack_id: item.pack_id,
+          rarity_id: item.rarity_id,
+          cards_per_box: item.cards_per_box || 0,
+          cards_per_box_reprint: item.cards_per_box_reprint || 0,
+          notes: item.notes,
+          notes_reprint: item.notes_reprint,
+          box_input_x: item.box_input_x,
+          box_input_y: item.box_input_y,
+          box_input_x_reprint: item.box_input_x_reprint,
+          box_input_y_reprint: item.box_input_y_reprint,
+          rarity: { 
+            name: item.rarities?.name || 'Unknown', 
+            color: item.rarities?.color || '#808080',
+            display_order: item.rarities?.display_order || 999
+          },
+          total_types: counts.total,
+          total_types_new: counts.new,
+          total_types_reprint: counts.reprint,
+          rate_per_card: counts.total > 0 ? (item.cards_per_box + (item.cards_per_box_reprint || 0)) / counts.total : 0,
+          rate_per_card_new: counts.new > 0 ? item.cards_per_box / counts.new : 0,
+          rate_per_card_reprint: counts.reprint > 0 ? (item.cards_per_box_reprint || 0) / counts.reprint : 0
+        }
+      })
       .filter(item => item.total_types > 0) // カードが存在するレアリティのみ表示
        || []
       
