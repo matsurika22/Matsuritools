@@ -67,15 +67,34 @@ export default function DisplayRaritiesPage({ params }: PageProps) {
         console.log('display_rarity_ids column not available yet')
       }
       
-      // 全レアリティを取得
-      const { data: raritiesData, error: raritiesError } = await supabase
-        .from('rarities')
-        .select('*')
-        .order('display_order')
+      // その弾に存在するレアリティのみを取得
+      // まず、その弾のカードから使用されているレアリティIDを取得
+      const { data: cardsData, error: cardsError } = await supabase
+        .from('cards')
+        .select('rarity_id')
+        .eq('pack_id', params.packId)
+        .not('rarity_id', 'is', null)
       
-      if (raritiesError) throw raritiesError
-      console.log('Loaded rarities:', raritiesData?.map(r => ({ id: r.id, name: r.name, idType: typeof r.id })))
-      setRarities(raritiesData || [])
+      if (cardsError) throw cardsError
+      
+      // ユニークなレアリティIDを抽出
+      const uniqueRarityIds = [...new Set(cardsData?.map(c => c.rarity_id) || [])]
+      
+      if (uniqueRarityIds.length === 0) {
+        console.log('No rarities found for this pack')
+        setRarities([])
+      } else {
+        // そのレアリティIDに対応するレアリティマスタを取得
+        const { data: raritiesData, error: raritiesError } = await supabase
+          .from('rarities')
+          .select('*')
+          .in('id', uniqueRarityIds)
+          .order('display_order')
+        
+        if (raritiesError) throw raritiesError
+        console.log('Loaded rarities for pack:', raritiesData?.map(r => ({ id: r.id, name: r.name })))
+        setRarities(raritiesData || [])
+      }
       
     } catch (error) {
       console.error('Error loading data:', error)
@@ -216,6 +235,16 @@ export default function DisplayRaritiesPage({ params }: PageProps) {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           レアリティ一覧
         </h2>
+        {rarities.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              この弾にはまだカードが登録されていません
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              カードを登録すると、そのレアリティが表示されます
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {rarities.map(rarity => (
             <div
@@ -248,6 +277,7 @@ export default function DisplayRaritiesPage({ params }: PageProps) {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* 保存ボタン */}
